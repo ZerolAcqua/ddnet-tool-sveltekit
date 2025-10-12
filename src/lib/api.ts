@@ -1,11 +1,44 @@
-// src/lib/api.js
-
 const DDNET_API = "https://master1.ddnet.org/ddnet/15/servers.json";
+
+// 类型声明
+export interface Player {
+    name: string;
+    score?: number;
+    skin?: { name?: string };
+    team?: number;
+    afk?: boolean;
+}
+
+export interface ServerInfo {
+    name: string;
+    map?: { name?: string };
+    clients: Player[];
+}
+
+export interface Server {
+    info?: ServerInfo;
+    location?: string;
+}
+
+export interface ServersData {
+    servers?: Server[];
+}
+
+export interface FoundPlayer {
+    player: string;
+    server: string;
+    map: string;
+    location: string;
+    score: number;
+    skin: string;
+    team: number;
+    afk: string;
+}
 
 /**
  * 获取 DDNet 全服数据
  */
-export async function fetchServers() {
+export async function fetchServers(): Promise<ServersData> {
     const res = await fetch(DDNET_API);
     if (!res.ok) throw new Error("无法获取 DDNet 服务器数据");
     return await res.json();
@@ -13,35 +46,33 @@ export async function fetchServers() {
 
 /**
  * 查询指定玩家是否在线
- * @param {string[]} playerNames - 玩家名数组
+ * @param playerNames 玩家名数组
  */
-export async function findPlayerByNames(playerNames) {
-    const foundPlayers = [];
+export async function findPlayerByNames(playerNames: string[]): Promise<Array<FoundPlayer>> {
+    const foundPlayers: Array<{
+        player: string;
+        server: string;
+        map: string;
+        location: string;
+        score: number;
+        skin: string;
+        team: number;
+        afk: string;
+    }> = [];
     try {
         const serversData = await fetchServers();
         const servers = serversData.servers || [];
-        
-        // 检查返回的数据是否是数组
+
         if (!Array.isArray(servers)) {
             console.error('API 返回的数据不是数组:', servers);
             throw new Error('服务器数据格式错误');
         }
 
-        // 使用 for...of 来确保异步操作按顺序执行
         for (const server of servers) {
-            // 确保服务器有 info 属性
-            if (!server || !server.info) {
-                continue;
-            }
-            
+            if (!server || !server.info) continue;
             const { info } = server;
-            
-            // 确保 clients 存在且是数组
-            if (!info.clients || !Array.isArray(info.clients)) {
-                continue;
-            }
+            if (!info.clients || !Array.isArray(info.clients)) continue;
 
-            // 查找每个服务器中的在线玩家
             const onlinePlayer = info.clients.find(player =>
                 player && player.name && playerNames.includes(player.name)
             );

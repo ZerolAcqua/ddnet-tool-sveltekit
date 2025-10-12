@@ -1,5 +1,6 @@
-<script>
-  export let player;  // 玩家信息
+<script lang="ts">
+  import type { FoundPlayer } from "../lib/api";
+  export let player: FoundPlayer;
 </script>
 
 <div class="p-3 bg-gray-700 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center">
