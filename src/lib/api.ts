@@ -81,10 +81,10 @@ export async function findPlayerByNames(playerNames: string[]): Promise<Array<Fo
                 foundPlayers.push({
                     player: onlinePlayer.name,
                     server: info.name,
-                    map: info.map?.name || '未知地图',
-                    location: server.location || '未知位置',
+                    map: info.map?.name || 'unknown',
+                    location: server.location || 'unknown',
                     score: onlinePlayer.score || 0,
-                    skin: onlinePlayer.skin?.name || '默认皮肤',
+                    skin: onlinePlayer.skin?.name || 'default',
                     team: onlinePlayer.team || 0,
                     afk: onlinePlayer.afk ? 'Yes' : 'No',
                 });
