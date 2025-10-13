@@ -24,6 +24,48 @@
 
   let countdown = Math.floor(REFRESH_INTERVAL / 1000); // 剩余秒数
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
+  let previousOnlinePlayers: string[] = []; // 记录上次在线的玩家
+
+  // 请求通知权限
+  async function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }
+
+  // 发送通知
+  function sendNotification(playerName: string, server: string) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('玩家上线通知', {
+        body: `${playerName} 在 ${server} 服务器上线了！`,
+        icon: '/favicon.ico',
+        tag: `player-${playerName}` // 防止重复通知
+      });
+    }
+  }
+
+  // 检测新上线玩家
+  function checkNewOnlinePlayers(currentPlayers: FoundPlayer[]) {
+    const currentOnline = currentPlayers
+      .filter(p => p.isOnline === true)
+      .map(p => p.player);
+    
+    // 找出新上线的玩家
+    const newOnlinePlayers = currentOnline.filter(
+      player => !previousOnlinePlayers.includes(player)
+    );
+    
+    // 为新上线的玩家发送通知
+    newOnlinePlayers.forEach(playerName => {
+      const playerData = currentPlayers.find(p => p.player === playerName);
+      if (playerData) {
+        sendNotification(playerName, playerData.server);
+      }
+    });
+    
+    // 更新上次在线玩家列表
+    previousOnlinePlayers = currentOnline;
+  }
 
   // 从 localStorage 读取缓存
   function loadCache() {
@@ -69,6 +111,15 @@
       const sortedOffline = offlinePlayers.sort((a, b) => a.player.localeCompare(b.player));
       
       results = [...sortedOnline, ...sortedOffline];
+      
+      // 检测新上线玩家并发送通知（仅在非首次加载时）
+      if (previousOnlinePlayers.length > 0) {
+        checkNewOnlinePlayers(results);
+      } else {
+        // 首次加载时初始化在线玩家列表
+        previousOnlinePlayers = sortedOnline.map(p => p.player);
+      }
+      
       cache = results;
       localStorage.setItem(CACHE_KEY, JSON.stringify(results));
     } catch (e: any) {
@@ -121,6 +172,9 @@
     searchPlayersOnline();
   }
   startTimer();
+  
+  // 请求通知权限
+  requestNotificationPermission();
 
   // 组件卸载时清理定时器
   onDestroy(() => {
