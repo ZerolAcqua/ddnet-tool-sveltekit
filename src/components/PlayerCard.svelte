@@ -4,7 +4,7 @@
 </script>
 
 <div
-  class="p-3 bg-gray-700 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center"
+  class="p-3 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center {player.isOnline === false ? 'bg-gray-700 opacity-40 text-gray-500' : 'bg-gray-700'}"
 >
   <div>
     <p class="font-bold text-lg">{player.player}</p>

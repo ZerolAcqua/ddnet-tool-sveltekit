@@ -33,6 +33,7 @@ export interface FoundPlayer {
     skin: string;
     team: number;
     afk: string;
+    isOnline?: boolean;
 }
 
 /**

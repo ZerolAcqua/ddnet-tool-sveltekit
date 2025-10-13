@@ -44,9 +44,31 @@
     try {
       const names = searchPlayers.map(p => p.player);
       const rawResults = await findPlayerByNames(names);
-      // 按玩家名排序，让相同名字连续出现
-      results = rawResults.sort((a, b) => a.player.localeCompare(b.player));
-      // 缓存结果到内存和 localStorage
+      
+      // 为不在线的玩家创建占位对象
+      const foundNames = rawResults.map(r => r.player);
+      const offlinePlayers = searchPlayers
+        .filter(p => !foundNames.includes(p.player))
+        .map(p => ({
+          player: p.player,
+          server: "离线",
+          map: "无",
+          location: "无",
+          score: 0,
+          skin: "无",
+          team: 0,
+          afk: "离线",
+          isOnline: false
+        }));
+      
+      // 在线玩家标记为在线
+      const onlinePlayers = rawResults.map(p => ({ ...p, isOnline: true }));
+      
+      // 排序：在线玩家在前，离线玩家在后，各自按名字排序
+      const sortedOnline = onlinePlayers.sort((a, b) => a.player.localeCompare(b.player));
+      const sortedOffline = offlinePlayers.sort((a, b) => a.player.localeCompare(b.player));
+      
+      results = [...sortedOnline, ...sortedOffline];
       cache = results;
       localStorage.setItem(CACHE_KEY, JSON.stringify(results));
     } catch (e: any) {
