@@ -20,14 +20,92 @@
   let results: PlayerItem[] = [];
   let loading: boolean = false;
   let cache: PlayerItem[] = [];
+  let previousCache: PlayerItem[] = []; // 用于比较状态变化
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lastManualRefresh = 0;
   const DEBOUNCE = 1500; // 1.5秒防抖
   let updateTimer: ReturnType<typeof setTimeout> | null = null; // 玩家列表更新防抖定时器
   const UPDATE_DEBOUNCE = 800; // 玩家列表更新防抖时间
+  let notificationPermission: NotificationPermission = "default";
 
   let countdown = Math.floor(REFRESH_INTERVAL / 1000); // 剩余秒数
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
+  let notificationsEnabled = true; // 通知开关
+
+  // 请求通知权限
+  async function requestNotificationPermission() {
+    if ("Notification" in window) {
+      const permission = await Notification.requestPermission();
+      notificationPermission = permission;
+      return permission;
+    }
+    return "denied";
+  }
+
+  // 发送上线通知（合并多个玩家）
+  function sendOnlineNotification(onlinePlayers: PlayerItem[]) {
+    if (notificationPermission !== "granted" || !notificationsEnabled || onlinePlayers.length === 0) return;
+    
+    if (onlinePlayers.length === 1) {
+      // 单个玩家上线
+      const player = onlinePlayers[0];
+      new Notification(`${player.player} 已上线！`, {
+        body: `服务器: ${player.server}\n地图: ${player.map}`,
+        icon: "/favicon.ico",
+        tag: "player-online-single",
+      });
+    } else {
+      // 多个玩家上线
+      const playerNames = onlinePlayers.map(p => p.player).join(", ");
+      new Notification(`${onlinePlayers.length} 名玩家已上线！`, {
+        body: `玩家: ${playerNames}`,
+        icon: "/favicon.ico",
+        tag: "player-online-multiple",
+      });
+    }
+  }
+
+  // 切换通知设置
+  async function toggleNotifications() {
+    if (!notificationsEnabled) {
+      // 如果要开启通知，需要请求权限
+      const permission = await requestNotificationPermission();
+      if (permission === "granted") {
+        notificationsEnabled = true;
+      }
+    } else {
+      notificationsEnabled = false;
+    }
+  }
+
+  // 检测玩家状态变化
+  function detectPlayerStatusChanges(newResults: PlayerItem[]) {
+    if (previousCache.length === 0) {
+      // 首次加载，不发送通知
+      previousCache = [...newResults];
+      return;
+    }
+
+    // 收集所有新上线的玩家
+    const newlyOnlinePlayers: PlayerItem[] = [];
+    
+    for (const newPlayer of newResults) {
+      const oldPlayer = previousCache.find(p => p.player === newPlayer.player);
+      
+      // 如果玩家之前离线，现在在线，添加到列表
+      if (oldPlayer && oldPlayer.isOnline === false && newPlayer.isOnline === true) {
+        newlyOnlinePlayers.push(newPlayer);
+      }
+    }
+
+    // 如果有玩家上线，发送一次通知
+    if (newlyOnlinePlayers.length > 0) {
+      sendOnlineNotification(newlyOnlinePlayers);
+    }
+
+    // 更新之前的缓存
+    previousCache = [...newResults];
+  }
 
   // 从 localStorage 读取缓存
   function loadCache() {
@@ -35,8 +113,10 @@
     if (raw) {
       try {
         cache = JSON.parse(raw);
+        previousCache = [...cache]; // 初始化之前的缓存
       } catch {
         cache = [];
+        previousCache = [];
       }
     }
   }
@@ -117,6 +197,10 @@
       const sortedOffline = offlinePlayers.sort((a, b) => a.player.localeCompare(b.player));
       
       results = [...sortedOnline, ...sortedOffline];
+      
+      // 检测玩家状态变化并发送通知
+      detectPlayerStatusChanges(results);
+      
       cache = results;
       localStorage.setItem(CACHE_KEY, JSON.stringify(results));
     } catch (e: any) {
@@ -168,6 +252,10 @@
   // 页面加载时读取数据
   loadSearchPlayers();
   loadCache();
+  
+  // 请求通知权限
+  requestNotificationPermission();
+  
   if (cache.length === 0 && searchPlayers.length > 0) {
     searchPlayersOnline();
   }
@@ -192,8 +280,19 @@
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold">玩家查询结果</h2>
       <div class="flex items-center gap-2">
+        <!-- 通知开关 -->
         <button
-          class="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50 ml-4"
+          class="px-4 py-2 rounded transition-colors flex items-center min-h-[2.5rem] {notificationsEnabled && notificationPermission === 'granted' 
+            ? 'bg-green-600 hover:bg-green-700 text-white' 
+            : 'bg-gray-600 hover:bg-gray-700 text-gray-300'}"
+          on:click={toggleNotifications}
+          title={notificationsEnabled && notificationPermission === 'granted' ? '点击关闭上线通知' : '点击开启上线通知'}
+        >
+          {notificationsEnabled && notificationPermission === 'granted' ? '通知已开启' : '通知已关闭'}
+        </button>
+        
+        <button
+          class="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50 min-h-[2.5rem] flex items-center"
           on:click={manualRefresh}
           disabled={loading || searchPlayers.length === 0}
         >
