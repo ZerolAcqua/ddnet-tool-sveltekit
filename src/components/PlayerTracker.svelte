@@ -1,19 +1,21 @@
 <script lang="ts">
   import { findPlayerByNames } from "../lib/api";
   import PlayerCard from "./PlayerCard.svelte";
+  import PlayerManager from "./PlayerManager.svelte";
   import type { PlayerItem } from "../lib/api";
   import { onDestroy } from "svelte";
 
   const CACHE_KEY = "ddnet_player_cache";
+  const SEARCH_PLAYERS_KEY = "ddnet_search_players";
   const REFRESH_INTERVAL = 120 * 1000; // 120 秒自动刷新
 
-  // 指定要搜索的玩家对象数组
-  const searchPlayers = [
-    { player: "Ham5terzilla" },
-    { player: "ZeroMS" },
-    { player: "1" },
-    { player: "Zerol Acqua" }
+  // 默认的搜索玩家列表
+  const defaultSearchPlayers = [
+    { player: "nameless tee" },
   ];
+
+  // 可编辑的搜索玩家数组
+  let searchPlayers: { player: string }[] = [];
 
   let results: PlayerItem[] = [];
   let loading: boolean = false;
@@ -21,6 +23,8 @@
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lastManualRefresh = 0;
   const DEBOUNCE = 1500; // 1.5秒防抖
+  let updateTimer: ReturnType<typeof setTimeout> | null = null; // 玩家列表更新防抖定时器
+  const UPDATE_DEBOUNCE = 800; // 玩家列表更新防抖时间
 
   let countdown = Math.floor(REFRESH_INTERVAL / 1000); // 剩余秒数
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
@@ -37,8 +41,51 @@
     }
   }
 
+  // 从 localStorage 读取搜索玩家列表
+  function loadSearchPlayers() {
+    const raw = localStorage.getItem(SEARCH_PLAYERS_KEY);
+    if (raw) {
+      try {
+        searchPlayers = JSON.parse(raw);
+      } catch {
+        searchPlayers = [...defaultSearchPlayers];
+      }
+    } else {
+      searchPlayers = [...defaultSearchPlayers];
+    }
+  }
+
+  // 保存搜索玩家列表到 localStorage
+  function saveSearchPlayers() {
+    localStorage.setItem(SEARCH_PLAYERS_KEY, JSON.stringify(searchPlayers));
+  }
+
+  // 处理玩家列表更新（带防抖）
+  function handlePlayersUpdate(updatedPlayers: { player: string }[]) {
+    searchPlayers = updatedPlayers;
+    saveSearchPlayers();
+    
+    // 清除之前的防抖定时器
+    if (updateTimer) {
+      clearTimeout(updateTimer);
+    }
+    
+    // 设置新的防抖定时器
+    updateTimer = setTimeout(() => {
+      // 重新搜索玩家
+      if (searchPlayers.length > 0) {
+        searchPlayersOnline();
+      } else {
+        // 如果没有玩家，立即清空结果和缓存（不需要防抖）
+        results = [];
+        cache = [];
+        localStorage.removeItem(CACHE_KEY);
+      }
+    }, UPDATE_DEBOUNCE);
+  }
+
   async function searchPlayersOnline() {
-    if (loading) return;
+    if (loading || searchPlayers.length === 0) return;
     loading = true;
     results = [];
     try {
@@ -86,7 +133,9 @@
   function startTimer() {
     if (timer) clearTimeout(timer);
     timer = setTimeout(async () => {
-      await searchPlayersOnline();
+      if (searchPlayers.length > 0) {
+        await searchPlayersOnline();
+      }
       resetCountdown();
       startTimer();
     }, REFRESH_INTERVAL);
@@ -116,9 +165,10 @@
     startTimer();
   }
 
-  // 页面加载时优先读取缓存，如果没有缓存才自动搜索
+  // 页面加载时读取数据
+  loadSearchPlayers();
   loadCache();
-  if (cache.length === 0) {
+  if (cache.length === 0 && searchPlayers.length > 0) {
     searchPlayersOnline();
   }
   startTimer();
@@ -127,27 +177,39 @@
   onDestroy(() => {
     if (timer) clearTimeout(timer);
     if (countdownTimer) clearInterval(countdownTimer);
+    if (updateTimer) clearTimeout(updateTimer);
   });
 </script>
 
 <div class="flex flex-col items-center w-full min-h-screen">
   <div class="w-full bg-gray-800 p-8 rounded-2xl shadow-lg">
+    <!-- 玩家管理面板 -->
+    <PlayerManager 
+      players={searchPlayers} 
+      onUpdate={handlePlayersUpdate}
+    />
+    
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold">玩家查询结果</h2>
       <div class="flex items-center gap-2">
         <button
           class="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50 ml-4"
           on:click={manualRefresh}
-          disabled={loading}
+          disabled={loading || searchPlayers.length === 0}
         >
           {loading ? "刷新中..." : "立即刷新"}
         </button>
         <span class="text-sm text-gray-300">{countdown}s 后自动刷新</span>
       </div>
     </div>
-    {#if cache.length > 0}
+    {#if searchPlayers.length === 0}
+      <div class="text-center py-8">
+        <p class="text-gray-400">请先添加要跟踪的玩家</p>
+        <p class="text-gray-500 text-sm mt-1">点击上方的"管理跟踪玩家"按钮来添加玩家</p>
+      </div>
+    {:else if cache.length > 0}
       <div class="space-y-2">
-        {#each cache as player}
+        {#each cache as player, index (index)}
           <PlayerCard {player} />
         {/each}
       </div>
