@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { FoundPlayer } from "../lib/api";
-  export let player: FoundPlayer;
+  import type { PlayerItem } from "../lib/api";
+  export let player: PlayerItem;
 </script>
 
 <div
@@ -9,6 +9,7 @@
   <div>
     <p class="font-bold text-lg">{player.player}</p>
     <p class="text-sm text-gray-300">服务器：{player.server}</p>
+    <p class="text-sm text-gray-300">地址：{player.serverAddr}</p>
     <p class="text-sm text-gray-300">地图：{player.map}</p>
     <!-- <p class="text-sm text-gray-300">得分：{player.score}</p> -->
     <!-- <p class="text-sm text-gray-300">皮肤：{player.skin}</p> -->

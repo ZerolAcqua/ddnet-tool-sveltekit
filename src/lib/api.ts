@@ -17,6 +17,8 @@ export interface ServerInfo {
 
 export interface Server {
     info?: ServerInfo;
+    addresses?: string[];
+    community?: string;
     location?: string;
 }
 
@@ -27,12 +29,25 @@ export interface ServersData {
 export interface FoundPlayer {
     player: string;
     server: string;
+    serverAddr: string;
     map: string;
     location: string;
     score: number;
     skin: string;
     team: number;
     afk: string;
+}
+
+export interface PlayerItem {
+    player: string;
+    server?: string;
+    serverAddr?: string;
+    map?: string;
+    location?: string;
+    score?: number;
+    skin?: string;
+    team?: number;
+    afk?: string;
     isOnline?: boolean;
 }
 
@@ -46,20 +61,29 @@ export async function fetchServers(): Promise<ServersData> {
 }
 
 /**
+ * 将 FoundPlayer 转换为 PlayerItem
+ */
+export function convertFoundPlayerToPlayerItem(foundPlayer: FoundPlayer): PlayerItem {
+    return {
+        player: foundPlayer.player,
+        server: foundPlayer.server,
+        serverAddr: foundPlayer.serverAddr,
+        map: foundPlayer.map,
+        location: foundPlayer.location,
+        score: foundPlayer.score,
+        skin: foundPlayer.skin,
+        team: foundPlayer.team,
+        afk: foundPlayer.afk,
+        isOnline: true // 从 API 查询到的都是在线玩家
+    };
+}
+
+/**
  * 查询指定玩家是否在线
  * @param playerNames 玩家名数组
  */
-export async function findPlayerByNames(playerNames: string[]): Promise<Array<FoundPlayer>> {
-    const foundPlayers: Array<{
-        player: string;
-        server: string;
-        map: string;
-        location: string;
-        score: number;
-        skin: string;
-        team: number;
-        afk: string;
-    }> = [];
+export async function findPlayerByNames(playerNames: string[]): Promise<Array<PlayerItem>> {
+    const foundPlayers: Array<FoundPlayer> = [];
     try {
         const serversData = await fetchServers();
         const servers = serversData.servers || [];
@@ -79,9 +103,14 @@ export async function findPlayerByNames(playerNames: string[]): Promise<Array<Fo
             );
 
             if (onlinePlayer) {
+                const address = server.addresses?.[0] || 'unknown';
+                const match = address.match(/\/\/([\d.]+:\d+)/); // 提取 ip:port
+                const ipPort = match ? match[1] : 'unknown';
+
                 foundPlayers.push({
                     player: onlinePlayer.name,
                     server: info.name,
+                    serverAddr: ipPort,
                     map: info.map?.name || 'unknown',
                     location: server.location || 'unknown',
                     score: onlinePlayer.score || 0,
@@ -96,5 +125,6 @@ export async function findPlayerByNames(playerNames: string[]): Promise<Array<Fo
         throw error;
     }
 
-    return foundPlayers;
+    // 将 FoundPlayer 转换为 PlayerItem
+    return foundPlayers.map(convertFoundPlayerToPlayerItem);
 }
