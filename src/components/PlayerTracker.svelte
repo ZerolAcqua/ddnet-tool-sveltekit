@@ -3,10 +3,15 @@
   import PlayerCard from "./PlayerCard.svelte";
   import PlayerManager from "./PlayerManager.svelte";
   import type { PlayerItem } from "../lib/api";
+  import type { User } from "../lib/auth";
   import { onDestroy } from "svelte";
 
-  const CACHE_KEY = "ddnet_player_cache";
-  const SEARCH_PLAYERS_KEY = "ddnet_search_players";
+  export let user: User;
+
+  // 基于用户ID的存储键
+  const getUserCacheKey = () => `ddnet_player_cache_${user.id}`;
+  const getUserSearchPlayersKey = () => `ddnet_search_players_${user.id}`;
+  
   const REFRESH_INTERVAL = 120 * 1000; // 120 秒自动刷新
 
   // 默认的搜索玩家列表
@@ -109,7 +114,7 @@
 
   // 从 localStorage 读取缓存
   function loadCache() {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(getUserCacheKey());
     if (raw) {
       try {
         cache = JSON.parse(raw);
@@ -123,7 +128,7 @@
 
   // 从 localStorage 读取搜索玩家列表
   function loadSearchPlayers() {
-    const raw = localStorage.getItem(SEARCH_PLAYERS_KEY);
+    const raw = localStorage.getItem(getUserSearchPlayersKey());
     if (raw) {
       try {
         searchPlayers = JSON.parse(raw);
@@ -137,7 +142,7 @@
 
   // 保存搜索玩家列表到 localStorage
   function saveSearchPlayers() {
-    localStorage.setItem(SEARCH_PLAYERS_KEY, JSON.stringify(searchPlayers));
+    localStorage.setItem(getUserSearchPlayersKey(), JSON.stringify(searchPlayers));
   }
 
   // 处理玩家列表更新（带防抖）
@@ -159,7 +164,7 @@
         // 如果没有玩家，立即清空结果和缓存（不需要防抖）
         results = [];
         cache = [];
-        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(getUserCacheKey());
       }
     }, UPDATE_DEBOUNCE);
   }
@@ -202,7 +207,7 @@
       detectPlayerStatusChanges(results);
       
       cache = results;
-      localStorage.setItem(CACHE_KEY, JSON.stringify(results));
+      localStorage.setItem(getUserCacheKey(), JSON.stringify(results));
     } catch (e: any) {
       // 只在没有缓存时弹窗
       if (cache.length === 0) {
