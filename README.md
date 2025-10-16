@@ -1,43 +1,78 @@
-# Svelte + Vite
+# DDNet 玩家追踪工具
 
-This template should help get you started developing with Svelte in Vite.
+一个用于追踪 DDNet 游戏玩家在线状态的 Web 应用，基于 Svelte 5 + TypeScript + TailwindCSS 构建。
 
-## Recommended IDE Setup
+## 已实现功能
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+- **实时监控**：每 2 分钟自动刷新玩家在线状态，并可以主动刷新
+- **列表管理面板**：通过输入框添加要追踪的玩家，支持编辑。
+- **数据持久化**: 使用 localStorage 保存玩家列表。
+- **上线通知**: 检测玩家从离线到在线状态变化，并进行通知。
+- **一键复制**: 点击在线玩家卡片复制服务器地址
 
-## Need an official Svelte framework?
+### 性能优化
+- **防抖机制**: 
+  - 手动刷新防抖 1.5秒
+  - 玩家列表更新防抖 800ms
+- **缓存策略**: 本地缓存查询结果，页面刷新后快速加载
+- **内存管理**: 组件卸载时自动清理定时器，防止内存泄漏
+- **API优化**: 避免频繁调用外部 API
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+### 用户体验
+- **响应式设计**: 完美适配桌面和移动设备
+- **无障碍支持**: 完整的键盘导航和 ARIA 标签
+- **加载状态**: 清晰的加载指示和错误处理
+- **直观界面**: 简洁的操作界面，无学习成本
 
-## Technical considerations
+## 🛠️ 技术架构
 
-**Why use this over SvelteKit?**
+### 核心技术栈
+- **Svelte 5** + **TypeScript** - 现代响应式前端框架
+- **TailwindCSS** - 原子化CSS样式框架  
+- **Vite** - 快速构建和开发工具
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `checkJs` in the JS template?**
-
-It is likely that most cases of changing variable types in runtime are likely to be accidental, rather than deliberate. This provides advanced typechecking out of the box. Should you like to take advantage of the dynamically-typed nature of JavaScript, it is trivial to change the configuration.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/sveltejs/svelte-hmr/tree/master/packages/svelte-hmr#preservation-of-local-state).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```js
-// store.js
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+### 组件结构
 ```
+App.svelte
+└── PlayerTracker.svelte (主控制器)
+    ├── PlayerManager.svelte (玩家管理面板)
+    └── PlayerCard.svelte (玩家信息卡片)
+```
+
+### 数据流
+```
+用户操作 → 状态更新 → API调用 → 数据处理 → 通知触发 → 本地缓存
+```
+
+## 快速开始
+
+```bash
+# 克隆项目
+git clone [repository-url]
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 构建生产版本
+npm run build
+```
+
+## 未来规划
+
+### 账号系统  
+- [ ] 用户注册登录，支持多用户数据隔离
+- [ ] 云端数据同步，跨设备访问
+- [ ] 权限管理，支持团队协作和数据分享
+
+### 算法优化
+- [ ] 智能缓存策略，减少API调用
+- [ ] 并发请求优化，支持大量玩家追踪
+- [ ] 网络优化，提升响应速度和稳定性
+
+### 统计图表
+- [ ] 玩家在线时长统计和趋势分析
+- [ ] 服务器偏好热力图
+- [ ] 历史数据记录与时间线查看
