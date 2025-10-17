@@ -67,7 +67,7 @@
 
 <div class="mb-6">
   <button
-    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+    class="px-4 py-2 bg-stone-600 text-white rounded-lg hover:bg-stone-500 transition-colors flex items-center"
     on:click={togglePanel}
   >
     管理跟踪玩家 ({players.length})
@@ -88,7 +88,7 @@
             on:keydown={(e) => handleKeydown(e, 'add')}
           />
           <button
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             on:click={addPlayer}
             disabled={!newPlayerName.trim() || players.some(p => p.player === newPlayerName.trim())}
           >
@@ -121,7 +121,7 @@
                   {/if}
                 </div>
                 <button
-                  class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="px-3 py-1 bg-teal-700 text-white text-sm rounded hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   on:click={saveEdit}
                   disabled={!editingName.trim() || isEditNameDuplicate}
                 >
@@ -137,14 +137,14 @@
                 <!-- 显示模式 -->
                 <span class="flex-1 text-white font-medium">{player.player}</span>
                 <button
-                  class="px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
+                  class="px-3 py-1 bg-amber-700 text-white text-sm rounded hover:bg-amber-600 transition-colors"
                   on:click={() => startEdit(index)}
                   title="编辑玩家名"
                 >
                   编辑
                 </button>
                 <button
-                  class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                  class="px-3 py-1 bg-rose-700 text-white text-sm rounded hover:bg-rose-600 transition-colors"
                   on:click={() => removePlayer(index)}
                   title="移除玩家"
                 >
@@ -165,7 +165,7 @@
       {#if players.length > 0}
         <div class="mt-6 pt-4 border-t border-gray-600">
           <button
-            class="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+            class="px-4 py-2 bg-rose-700 text-white text-sm rounded hover:bg-rose-600 transition-colors"
             on:click={() => onUpdate([])}
           >
             清空所有玩家

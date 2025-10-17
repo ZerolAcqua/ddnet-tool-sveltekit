@@ -288,7 +288,7 @@
         <!-- 通知开关 -->
         <button
           class="px-4 py-2 rounded transition-colors flex items-center min-h-[2.5rem] {notificationsEnabled && notificationPermission === 'granted' 
-            ? 'bg-green-600 hover:bg-green-700 text-white' 
+            ? 'bg-emerald-700 hover:bg-emerald-600 text-white' 
             : 'bg-gray-600 hover:bg-gray-700 text-gray-300'}"
           on:click={toggleNotifications}
           title={notificationsEnabled && notificationPermission === 'granted' ? '点击关闭上线通知' : '点击开启上线通知'}
@@ -297,7 +297,7 @@
         </button>
         
         <button
-          class="px-4 py-2 bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50 min-h-[2.5rem] flex items-center"
+          class="px-4 py-2 bg-slate-600 rounded hover:bg-slate-500 disabled:opacity-50 min-h-[2.5rem] flex items-center text-white"
           on:click={manualRefresh}
           disabled={loading || searchPlayers.length === 0}
         >
