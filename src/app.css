@@ -49,7 +49,8 @@ h1 {
   text-align: left;
 }
 
-button {
+/* 只对没有 class 的 button 应用默认样式，不影响组件中的按钮 */
+button:not([class]) {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -60,11 +61,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
+button:not([class]):hover {
   border-color: #646cff;
 }
-button:focus,
-button:focus-visible {
+button:not([class]):focus,
+button:not([class]):focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 

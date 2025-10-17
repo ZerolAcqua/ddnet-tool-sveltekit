@@ -25,13 +25,17 @@
   }
 </script>
 
-<div class="space-y-4">
-  <h1 class="text-xl font-bold text-white">管理员面板</h1>
+<div class="w-full">
+  <!-- 管理面板标题 -->
+  <div class="bg-gray-800 rounded-xl p-6 mb-6">
+    <h2 class="text-2xl font-bold text-white mb-4">管理员面板</h2>
+    <p class="text-gray-300 mb-4">系统管理和用户监控中心，管理平台用户和系统设置。</p>
+  </div>
 
   <!-- 用户管理 -->
-  <div class="bg-gray-800 rounded-lg p-4">
+  <div class="bg-gray-800 rounded-xl p-6">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="font-bold text-white">用户管理</h2>
+      <h3 class="text-lg font-bold text-white">用户管理</h3>
       <button
         class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
         on:click={loadAllUsers}
@@ -67,17 +71,5 @@
         <p class="text-gray-400">暂无用户数据</p>
       </div>
     {/if}
-  </div>
-
-  <!-- 返回按钮 -->
-  <div class="flex justify-center">
-    <button
-      class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
-      on:click={() => {
-        import('../router').then(({ navigate }) => navigate('/'));
-      }}
-    >
-      ← 返回首页
-    </button>
   </div>
 </div>

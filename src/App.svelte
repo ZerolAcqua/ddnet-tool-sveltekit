@@ -7,6 +7,7 @@
   // 导入组件
   import AuthForm from './shared/components/AuthForm.svelte';
   import Navigation from './shared/components/Navigation.svelte';
+  import Breadcrumb from './shared/components/Breadcrumb.svelte';
   import Router from './shared/components/Router.svelte';
 
   let user: User | null = null;
@@ -54,12 +55,15 @@
 {:else}
   <!-- 已登录状态显示主网站 -->
   <main class="min-h-screen bg-gray-900 text-white">
-    <div class="container mx-auto p-6 max-w-7xl">
-      
-      <!-- 顶部导航栏（包含用户信息） -->
-      <Navigation {user} onLogout={handleLogout} />
-      
-      <!-- 主内容区 - 路由控制 -->
+    
+    <!-- 顶部导航栏 -->
+    <Navigation {user} onLogout={handleLogout} />
+    
+    <!-- 面包屑导航 -->
+    <Breadcrumb {user} />
+    
+    <!-- 主内容区 - 路由控制 -->
+    <div class="container mx-auto max-w-7xl px-6 pb-6">
       <div class="min-h-[60vh]">
         <Router {user} />
       </div>
@@ -68,7 +72,7 @@
       <footer class="mt-12 text-center text-sm text-gray-500 border-t border-gray-700 pt-6">
         <p>© 2025 DDNet 工具集 - 专为 DDNet 玩家打造</p>
       </footer>
-      
     </div>
+    
   </main>
 {/if}
