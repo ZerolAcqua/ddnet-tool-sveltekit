@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { register, login } from '../lib/auth';
-  import type { User } from '../lib/auth';
+  import { register, login } from '../auth/auth';
+  import type { User } from '../auth/auth';
 
   export let onLogin: (user: User) => void = () => {};
 
@@ -85,9 +85,8 @@
 <div class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
   <div class="bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-md">
     <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-white mb-2">DDNet 玩家追踪器</h1>
       <h2 class="text-xl font-semibold text-gray-300">
-        {isLoginMode ? '登录' : '注册'}
+        {isLoginMode ? '用户登录' : '用户注册'}
       </h2>
     </div>
 

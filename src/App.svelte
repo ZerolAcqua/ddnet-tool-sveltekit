@@ -1,10 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import PlayerTracker from './components/PlayerTracker.svelte';
-  import AuthForm from './components/AuthForm.svelte';
-  import UserPanel from './components/UserPanel.svelte';
-  import { getCurrentUser } from './lib/auth';
-  import type { User } from './lib/auth';
+  import { getCurrentUser } from './shared/auth/auth';
+  import { navigate, currentRoute } from './shared/router';
+  import type { User } from './shared/auth/auth';
+  
+  // 导入组件
+  import AuthForm from './shared/components/AuthForm.svelte';
+  import UserPanel from './shared/components/UserPanel.svelte';
+  import Navigation from './shared/components/Navigation.svelte';
+  import Router from './shared/components/Router.svelte';
 
   let user: User | null = null;
   let isLoading = true;
@@ -17,10 +21,27 @@
 
   function handleLogin(loggedInUser: User) {
     user = loggedInUser;
+    navigate('/');
   }
 
   function handleLogout() {
     user = null;
+    navigate('/login');
+  }
+
+  // 根据用户状态决定显示内容
+  $: if (!isLoading && user !== null) {
+    // 如果已登录但当前路径是登录页，重定向到首页
+    if ($currentRoute.path === '/login') {
+      navigate('/');
+    }
+  }
+
+  $: if (!isLoading && user === null) {
+    // 如果未登录且不在登录页，重定向到登录页
+    if ($currentRoute.path !== '/login') {
+      navigate('/login');
+    }
   }
 </script>
 
@@ -28,20 +49,30 @@
   <div class="min-h-screen bg-gray-900 flex items-center justify-center">
     <div class="text-white text-xl">加载中...</div>
   </div>
-{:else if !user}
+{:else if !user || $currentRoute.name === 'login'}
   <!-- 未登录状态显示登录表单 -->
   <AuthForm onLogin={handleLogin} />
 {:else}
-  <!-- 已登录状态显示主应用 -->
-  <main class="min-h-screen bg-gray-900 text-white flex flex-col items-center p-6">
-    <h1 class="text-3xl font-bold mb-6">DDNet 玩家跟踪器</h1>
-    
-    <!-- 用户面板 -->
-    <div class="w-full max-w-6xl">
+  <!-- 已登录状态显示主网站 -->
+  <main class="min-h-screen bg-gray-900 text-white">
+    <div class="container mx-auto p-6 max-w-7xl">
+      
+      <!-- 用户面板 -->
       <UserPanel {user} onLogout={handleLogout} />
       
-      <!-- 玩家追踪器 -->
-      <PlayerTracker {user} />
+      <!-- 导航栏 -->
+      <Navigation {user} />
+      
+      <!-- 主内容区 - 路由控制 -->
+      <div class="min-h-[60vh]">
+        <Router {user} />
+      </div>
+      
+      <!-- 页脚 -->
+      <footer class="mt-12 text-center text-sm text-gray-500 border-t border-gray-700 pt-6">
+        <p>© 2025 DDNet 工具集 - 专为 DDNet 玩家打造</p>
+      </footer>
+      
     </div>
   </main>
 {/if}

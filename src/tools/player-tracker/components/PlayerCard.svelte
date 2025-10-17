@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PlayerItem } from "../lib/api";
+  import type { PlayerItem } from "../api";
   export let player: PlayerItem;
 
   let copySuccess = false;

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { findPlayerByNames } from "../lib/api";
+  import { findPlayerByNames } from "../api";
   import PlayerCard from "./PlayerCard.svelte";
   import PlayerManager from "./PlayerManager.svelte";
-  import type { PlayerItem } from "../lib/api";
-  import type { User } from "../lib/auth";
+  import type { PlayerItem } from "../api";
+  import type { User } from "../../../shared/auth/auth";
   import { onDestroy } from "svelte";
 
   export let user: User;

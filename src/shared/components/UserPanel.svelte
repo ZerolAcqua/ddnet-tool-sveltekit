@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { logout, updateUser, changePassword, deleteAccount, getAllUsers } from '../lib/auth';
-  import type { User } from '../lib/auth';
+  import { logout, updateUser, changePassword, deleteAccount, getAllUsers } from '../auth/auth';
+  import type { User } from '../auth/auth';
 
   export let user: User;
   export let onLogout: () => void = () => {};
@@ -169,19 +169,29 @@
     </div>
     <div class="flex gap-2">
       <button
-        class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-        on:click={() => showEditProfile = !showEditProfile}
+        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+        on:click={() => {
+          import('../router').then(({ navigate }) => navigate('/profile'));
+        }}
       >
-        账户设置
+        个人资料
       </button>
       {#if user.isAdmin}
         <button
           class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-          on:click={toggleAdminPanel}
+          on:click={() => {
+            import('../router').then(({ navigate }) => navigate('/admin'));
+          }}
         >
           管理面板
         </button>
       {/if}
+      <button
+        class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+        on:click={() => showEditProfile = !showEditProfile}
+      >
+        快速设置
+      </button>
       <button
         class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
         on:click={handleLogout}
