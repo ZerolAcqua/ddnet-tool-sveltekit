@@ -4,7 +4,6 @@
 export interface User {
   id: string;
   username: string;
-  email: string;
   createdAt: string;
   isAdmin?: boolean;
 }
@@ -61,29 +60,22 @@ function setCurrentUser(user: User | null) {
 }
 
 // 用户注册
-export function register(username: string, email: string, password: string): { success: boolean; message: string; user?: User } {
+export function register(username: string, password: string): { success: boolean; message: string; user?: User } {
   // 验证输入
-  if (!username.trim() || !email.trim() || !password.trim()) {
-    return { success: false, message: '所有字段都是必需的' };
+  if (!username.trim() || !password.trim()) {
+    return { success: false, message: '用户名和密码都是必需的' };
   }
 
   if (password.length < 6) {
     return { success: false, message: '密码长度至少6位' };
   }
 
-  if (!/\S+@\S+\.\S+/.test(email)) {
-    return { success: false, message: '邮箱格式不正确' };
-  }
-
   const users = getUsers();
   
-  // 检查用户名和邮箱是否已存在
+  // 检查用户名是否已存在
   for (const userData of Object.values(users)) {
     if (userData.user.username === username) {
       return { success: false, message: '用户名已存在' };
-    }
-    if (userData.user.email === email) {
-      return { success: false, message: '邮箱已被注册' };
     }
   }
 
@@ -91,7 +83,6 @@ export function register(username: string, email: string, password: string): { s
   const user: User = {
     id: generateUserId(),
     username: username.trim(),
-    email: email.trim(),
     createdAt: new Date().toISOString(),
     isAdmin: Object.keys(users).length === 0 // 第一个用户设为管理员
   };
@@ -106,19 +97,18 @@ export function register(username: string, email: string, password: string): { s
 }
 
 // 用户登录
-export function login(usernameOrEmail: string, password: string): { success: boolean; message: string; user?: User } {
-  if (!usernameOrEmail.trim() || !password.trim()) {
+export function login(username: string, password: string): { success: boolean; message: string; user?: User } {
+  if (!username.trim() || !password.trim()) {
     return { success: false, message: '用户名和密码不能为空' };
   }
 
   const users = getUsers();
   const passwordHash = simpleHash(password);
   
-  // 查找用户（支持用户名或邮箱登录）
+  // 查找用户
   for (const userData of Object.values(users)) {
     const { user } = userData;
-    if ((user.username === usernameOrEmail || user.email === usernameOrEmail) && 
-        userData.passwordHash === passwordHash) {
+    if (user.username === username && userData.passwordHash === passwordHash) {
       setCurrentUser(user);
       return { success: true, message: '登录成功', user };
     }
@@ -147,7 +137,7 @@ export function getAuthState(): AuthState {
 }
 
 // 更新用户信息
-export function updateUser(updates: Partial<Pick<User, 'username' | 'email'>>): { success: boolean; message: string; user?: User } {
+export function updateUser(updates: Partial<Pick<User, 'username'>>): { success: boolean; message: string; user?: User } {
   const currentUser = getCurrentUser();
   if (!currentUser) {
     return { success: false, message: '用户未登录' };
@@ -159,22 +149,11 @@ export function updateUser(updates: Partial<Pick<User, 'username' | 'email'>>): 
     return { success: false, message: '用户不存在' };
   }
 
-  // 检查用户名和邮箱唯一性
+  // 检查用户名唯一性
   if (updates.username && updates.username !== currentUser.username) {
     for (const [id, data] of Object.entries(users)) {
       if (id !== currentUser.id && data.user.username === updates.username) {
         return { success: false, message: '用户名已存在' };
-      }
-    }
-  }
-
-  if (updates.email && updates.email !== currentUser.email) {
-    if (!/\S+@\S+\.\S+/.test(updates.email)) {
-      return { success: false, message: '邮箱格式不正确' };
-    }
-    for (const [id, data] of Object.entries(users)) {
-      if (id !== currentUser.id && data.user.email === updates.email) {
-        return { success: false, message: '邮箱已被使用' };
       }
     }
   }

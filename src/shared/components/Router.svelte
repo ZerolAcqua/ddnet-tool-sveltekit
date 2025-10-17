@@ -6,7 +6,6 @@
   
   // 导入页面组件
   import Dashboard from './Dashboard.svelte';
-  import UserProfile from './UserProfile.svelte';
   import AdminPanel from './AdminPanel.svelte';
 
   export let user: User | null = null;
@@ -40,10 +39,6 @@
       switch (route.name) {
         case 'dashboard':
           currentComponent = Dashboard;
-          break;
-          
-        case 'profile':
-          currentComponent = UserProfile;
           break;
           
         case 'admin':

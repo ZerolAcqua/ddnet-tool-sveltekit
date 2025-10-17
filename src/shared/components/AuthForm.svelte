@@ -7,7 +7,6 @@
   let isLoginMode = true;
   let formData = {
     username: '',
-    email: '',
     password: '',
     confirmPassword: ''
   };
@@ -22,7 +21,6 @@
   function clearForm() {
     formData = {
       username: '',
-      email: '',
       password: '',
       confirmPassword: ''
     };
@@ -52,8 +50,8 @@
         }
       } else {
         // 注册逻辑
-        if (!formData.username.trim() || !formData.email.trim() || !formData.password.trim()) {
-          message = '请填写所有字段';
+        if (!formData.username.trim() || !formData.password.trim()) {
+          message = '请填写用户名和密码';
           return;
         }
 
@@ -62,7 +60,7 @@
           return;
         }
 
-        const result = register(formData.username.trim(), formData.email.trim(), formData.password);
+        const result = register(formData.username.trim(), formData.password);
         if (result.success && result.user) {
           onLogin(result.user);
           clearForm();
@@ -94,34 +92,18 @@
       <!-- 用户名 -->
       <div>
         <label for="username" class="block text-sm font-medium text-gray-300 mb-2">
-          {isLoginMode ? '用户名/邮箱' : '用户名'}
+          用户名
         </label>
         <input
           id="username"
           type="text"
           bind:value={formData.username}
           on:keydown={handleKeydown}
-          placeholder={isLoginMode ? '输入用户名或邮箱' : '选择一个用户名'}
+          placeholder={isLoginMode ? '输入用户名' : '选择一个用户名'}
           class="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition-colors"
           disabled={isLoading}
         />
       </div>
-
-      <!-- 邮箱（仅注册时显示） -->
-      {#if !isLoginMode}
-        <div>
-          <label for="email" class="block text-sm font-medium text-gray-300 mb-2">邮箱</label>
-          <input
-            id="email"
-            type="email"
-            bind:value={formData.email}
-            on:keydown={handleKeydown}
-            placeholder="输入你的邮箱"
-            class="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition-colors"
-            disabled={isLoading}
-          />
-        </div>
-      {/if}
 
       <!-- 密码 -->
       <div>
@@ -161,13 +143,15 @@
       {/if}
 
       <!-- 提交按钮 -->
-      <button
-        type="submit"
-        disabled={isLoading}
-        class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isLoading ? '处理中...' : (isLoginMode ? '登录' : '注册')}
-      </button>
+      <div class="pt-2">
+        <button
+          type="submit"
+          disabled={isLoading}
+          class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? '处理中...' : (isLoginMode ? '登录' : '注册')}
+        </button>
+      </div>
     </form>
 
     <!-- 切换模式 -->
@@ -190,7 +174,7 @@
       <p class="text-gray-400 text-sm">
         <strong>说明：</strong> 
         {#if isLoginMode}
-          使用你的用户名或邮箱登录。忘记密码请联系管理员。
+          使用你的用户名登录。忘记密码请联系管理员。
         {:else}
           第一个注册的用户将自动成为管理员。数据保存在本地浏览器中。
         {/if}
