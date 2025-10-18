@@ -21,7 +21,7 @@
 
   // 监听路由变化
   $: {
-    if ($currentRoute && user !== null) {
+    if ($currentRoute) {
       handleRouteChange($currentRoute, $routeParams);
     }
   }
@@ -57,6 +57,13 @@
           const tool = getToolById(toolId);
           
           if (tool) {
+            // 检查工具是否需要登录
+            if (tool.requiredPermissions && tool.requiredPermissions.length > 0 && !user) {
+              const { navigate } = await import('../router');
+              navigate('/login');
+              return;
+            }
+            
             try {
               const modulePromise = tool.component();
               const module = await modulePromise;

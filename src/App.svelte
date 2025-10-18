@@ -26,7 +26,7 @@
 
   function handleLogout() {
     user = null;
-    navigate('/login');
+    navigate('/');
   }
 
   // 根据用户状态决定显示内容
@@ -36,24 +36,17 @@
       navigate('/');
     }
   }
-
-  $: if (!isLoading && user === null) {
-    // 如果未登录且不在登录页，重定向到登录页
-    if ($currentRoute.path !== '/login') {
-      navigate('/login');
-    }
-  }
 </script>
 
 {#if isLoading}
   <div class="min-h-screen bg-gray-900 flex items-center justify-center">
     <div class="text-white text-xl">加载中...</div>
   </div>
-{:else if !user || $currentRoute.name === 'login'}
-  <!-- 未登录状态显示登录表单 -->
+{:else if $currentRoute.name === 'login'}
+  <!-- 登录页面 -->
   <AuthForm onLogin={handleLogin} />
 {:else}
-  <!-- 已登录状态显示主网站 -->
+  <!-- 主网站 -->
   <main class="min-h-screen bg-gray-900 text-white">
     
     <!-- 顶部导航栏 -->

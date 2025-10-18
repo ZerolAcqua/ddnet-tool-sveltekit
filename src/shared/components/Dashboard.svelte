@@ -4,8 +4,9 @@
   import type { User } from '../auth/auth';
   import type { Tool } from '../../tools/registry';
 
-  export let user: User;
+  export let user: User | null;
 
+  // 获取用户可用的工具（已经根据登录状态和权限过滤）
   $: availableTools = getAvailableTools(user);
 
   function handleToolClick(tool: Tool) {
@@ -30,24 +31,37 @@
   <!-- 可用工具 -->
   <div class="bg-gray-800 rounded-lg p-6">
     <h2 class="text-xl font-bold text-white mb-6">可用工具</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {#each availableTools as tool (tool.id)}
-        <button
-          class="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-left transition-colors border border-gray-600 hover:border-blue-500"
-          on:click={() => handleToolClick(tool)}
-        >
-          <div>
-            <h3 class="font-medium text-white mb-2">{tool.name}</h3>
-            <p class="text-sm text-gray-400 leading-relaxed">{tool.description}</p>
-            <div class="mt-3">
-              <span class="inline-block px-2 py-1 bg-blue-600 text-white text-xs rounded">
-                {tool.category === 'game' ? '游戏' : tool.category === 'utility' ? '实用工具' : '数据分析'}
-              </span>
+    
+    {#if availableTools.length > 0}
+      <!-- 显示用户实际可以使用的工具 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {#each availableTools as tool (tool.id)}
+          <button
+            class="p-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-left transition-colors border border-gray-600 hover:border-blue-500"
+            on:click={() => handleToolClick(tool)}
+          >
+            <div>
+              <h3 class="font-medium text-white mb-2">{tool.name}</h3>
+              <p class="text-sm text-gray-400 leading-relaxed">{tool.description}</p>
+              <div class="mt-3">
+                <span class="inline-block px-2 py-1 bg-blue-600 text-white text-xs rounded">
+                  {tool.category === 'game' ? '游戏' : tool.category === 'utility' ? '实用工具' : '数据分析'}
+                </span>
+              </div>
             </div>
-          </div>
-        </button>
-      {/each}
-    </div>
+          </button>
+        {/each}
+      </div>
+    {:else}
+      <!-- 没有可用工具时的提示 -->
+      <div class="text-center py-12">
+        <div class="text-4xl mb-4">🔧</div>
+        <h3 class="text-lg font-medium text-white mb-2">即将推出更多工具</h3>
+        <p class="text-gray-400">
+          我们正在开发更多有用的 DDNet 工具，敬请期待！
+        </p>
+      </div>
+    {/if}
   </div>
 
   <!-- 快速开始 -->

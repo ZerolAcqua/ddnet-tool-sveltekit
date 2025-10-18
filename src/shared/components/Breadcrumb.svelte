@@ -3,15 +3,13 @@
   import { navigate, currentRoute, getToolPath } from '../router';
   import type { User } from '../auth/auth';
 
-  export let user: User;
+  export let user: User | null;
 
-  $: availableTools = getAvailableTools(user);
+  $: availableTools = user ? getAvailableTools(user) : [];
 
   function handleToolClick(toolId: string) {
     navigate(getToolPath(toolId));
   }
-
-
 
   function handleDashboardClick() {
     navigate('/');

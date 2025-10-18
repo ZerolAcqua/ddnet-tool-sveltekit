@@ -15,9 +15,9 @@ export const routeParams = writable<Record<string, string>>({});
 
 // 路由定义
 export const routes: Route[] = [
-  { path: '/', name: 'dashboard', requireAuth: true },
+  { path: '/', name: 'dashboard', requireAuth: false },
   { path: '/admin', name: 'admin', requireAuth: true },
-  { path: '/tool/:toolId', name: 'tool', requireAuth: true },
+  { path: '/tool/:toolId', name: 'tool', requireAuth: false }, // 工具路由根据具体工具判断是否需要认证
   { path: '/login', name: 'login', requireAuth: false }
 ];
 

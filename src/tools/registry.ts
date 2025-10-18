@@ -24,6 +24,7 @@ export const toolRegistry: Tool[] = [
     icon: '🎯',
     category: 'game',
     component: PlayerTrackerTool,
+    requiredPermissions: ['user'], // 需要登录
     isActive: true
   },
   // 后续可以添加更多工具
