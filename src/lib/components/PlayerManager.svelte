@@ -23,6 +23,7 @@
   let editingName = '';
   let isVisible = false;
   let isLoading = false;
+  let isBulkLoading = false; // 批量操作专用加载状态
   let message = '';
   let showClearConfirm = false;
   
@@ -42,7 +43,7 @@
   
   // 批量操作相关
   let selectedPlayerIds: Set<string> = new Set();
-  let bulkAction: 'activate' | 'deactivate' | 'delete' | 'notifications' = 'activate';
+  let bulkAction: 'activate' | 'deactivate' | 'enable-notifications' | 'disable-notifications' | 'delete' = 'activate';
   let showBulkConfirm = false;
   
   // 导入导出相关
@@ -129,8 +130,8 @@
         newPlayerName = '';
         message = result.message;
         
-        // 使用防抖更新列表 - 添加玩家需要搜索
-        debounceUpdate(true);
+        // 使用防抖更新列表 - 添加玩家不需要立即搜索
+        debounceUpdate(false);
       } else {
         message = result.message;
       }
@@ -143,16 +144,7 @@
   }
 
   async function removePlayer(id: string) {
-    if (isLoading) return;
-
-    // 清除之前的编辑防抖定时器
-    if (editTimer) {
-      clearTimeout(editTimer);
-      editTimer = null;
-    }
-
-    isLoading = true;
-    message = '';
+    if (isLoading) return false;
 
     try {
       const response = await fetch(`/api/tools/player-tracker/${id}`, {
@@ -162,29 +154,19 @@
       const result = await response.json();
 
       if (result.success) {
-        message = result.message;
-        debounceUpdate(true); // 删除玩家需要搜索
+        return true;
       } else {
-        message = result.message;
+        console.error('删除玩家失败:', result.message);
+        return false;
       }
     } catch (error) {
       console.error('删除玩家失败:', error);
-      message = '删除失败，请稍后重试';
-    } finally {
-      isLoading = false;
+      return false;
     }
   }
 
   async function updatePlayerSettings(id: string, updates: { isActive?: boolean; notificationEnabled?: boolean }) {
-    if (isLoading) return;
-
-    // 清除之前的更新防抖定时器
-    if (updateTimer) {
-      clearTimeout(updateTimer);
-      updateTimer = null;
-    }
-
-    isLoading = true;
+    if (isLoading) return false;
 
     try {
       const response = await fetch(`/api/tools/player-tracker/${id}`, {
@@ -198,17 +180,27 @@
       const result = await response.json();
 
       if (result.success) {
-        // 使用防抖更新列表，状态更新不需要搜索
-        debounceUpdate(false);
+        return true;
       } else {
-        message = result.message;
+        console.error('更新玩家设置失败:', result.message);
+        return false;
       }
     } catch (error) {
       console.error('更新玩家设置失败:', error);
-      message = '更新失败，请稍后重试';
-    } finally {
-      isLoading = false;
+      return false;
     }
+  }
+
+  // 切换单个玩家设置的包装函数
+  async function togglePlayerSetting(id: string, updates: { isActive?: boolean; notificationEnabled?: boolean }) {
+    await updatePlayerSettings(id, updates);
+    debounceUpdate(false); // 状态切换不需要搜索
+  }
+
+  // 删除单个玩家的包装函数
+  async function deletePlayer(id: string) {
+    await removePlayer(id);
+    debounceUpdate(false); // 删除不需要搜索
   }
 
   function startEdit(id: string, currentName: string) {
@@ -363,20 +355,22 @@
   async function executeBulkAction() {
     if (selectedPlayerIds.size === 0) return;
     
-    isLoading = true;
+    isBulkLoading = true;
     message = '';
 
     try {
-      const promises = Array.from(selectedPlayerIds).map(playerId => {
+      const promises = Array.from(selectedPlayerIds).map(async playerId => {
         switch (bulkAction) {
           case 'activate':
-            return updatePlayerSettings(playerId, { isActive: true });
+            return await updatePlayerSettings(playerId, { isActive: true });
           case 'deactivate':
-            return updatePlayerSettings(playerId, { isActive: false });
-          case 'notifications':
-            return updatePlayerSettings(playerId, { notificationEnabled: true });
+            return await updatePlayerSettings(playerId, { isActive: false });
+          case 'enable-notifications':
+            return await updatePlayerSettings(playerId, { notificationEnabled: true });
+          case 'disable-notifications':
+            return await updatePlayerSettings(playerId, { notificationEnabled: false });
           case 'delete':
-            return removePlayer(playerId);
+            return await removePlayer(playerId);
           default:
             return Promise.resolve();
         }
@@ -395,7 +389,7 @@
       console.error('批量操作失败:', error);
       message = '批量操作失败，请稍后重试';
     } finally {
-      isLoading = false;
+      isBulkLoading = false;
     }
   }
 
@@ -639,8 +633,8 @@
             
             <!-- 每页显示数量 -->
             <div class="flex items-center gap-2">
-              <label class="text-xs">每页显示:</label>
-              <select class="input-field text-xs py-1" bind:value={itemsPerPage} disabled={isLoading}>
+              <label for="items-per-page" class="text-xs">每页显示:</label>
+              <select id="items-per-page" class="input-field text-xs py-1" bind:value={itemsPerPage} disabled={isLoading}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -656,23 +650,24 @@
             <div class="flex items-center justify-between">
               <span class="text-blue-300 text-sm">已选中 {selectedPlayerIds.size} 个玩家</span>
               <div class="flex items-center gap-2">
-                <select class="input-field text-sm py-1" bind:value={bulkAction} disabled={isLoading}>
+                <select class="input-field text-sm py-1 min-w-32" bind:value={bulkAction} disabled={isLoading || isBulkLoading}>
                   <option value="activate">激活追踪</option>
                   <option value="deactivate">停用追踪</option>
-                  <option value="notifications">开启通知</option>
+                  <option value="enable-notifications">开启通知</option>
+                  <option value="disable-notifications">关闭通知</option>
                   <option value="delete">删除玩家</option>
                 </select>
                 <button
-                  class="btn-primary-sm"
+                  class="btn-primary-sm whitespace-nowrap"
                   on:click={() => showBulkConfirm = true}
-                  disabled={isLoading}
+                  disabled={isLoading || isBulkLoading}
                 >
                   执行操作
                 </button>
                 <button
-                  class="btn-secondary-sm"
+                  class="btn-secondary-sm whitespace-nowrap"
                   on:click={() => selectedPlayerIds = new Set()}
-                  disabled={isLoading}
+                  disabled={isLoading || isBulkLoading}
                 >
                   取消选择
                 </button>
@@ -757,7 +752,7 @@
                     <!-- 追踪状态按钮 -->
                     <button
                       class="{player.isActive ? 'btn-status-active' : 'btn-status-inactive'}"
-                      on:click={() => updatePlayerSettings(player.id, { isActive: !player.isActive })}
+                      on:click={() => togglePlayerSetting(player.id, { isActive: !player.isActive })}
                       disabled={isLoading}
                       title={player.isActive ? '点击停用追踪' : '点击启用追踪'}
                     >
@@ -768,7 +763,7 @@
                     <!-- 通知状态按钮 -->
                     <button
                       class="{player.notificationEnabled ? 'btn-status-notification-on' : 'btn-status-notification-off'}"
-                      on:click={() => updatePlayerSettings(player.id, { notificationEnabled: !player.notificationEnabled })}
+                      on:click={() => togglePlayerSetting(player.id, { notificationEnabled: !player.notificationEnabled })}
                       disabled={isLoading}
                       title={player.notificationEnabled ? '点击关闭通知' : '点击开启通知'}
                     >
@@ -787,7 +782,7 @@
                     </button>
                     <button
                       class="btn-danger-sm"
-                      on:click={() => removePlayer(player.id)}
+                      on:click={() => deletePlayer(player.id)}
                       disabled={isLoading}
                       title="移除玩家"
                     >
@@ -852,8 +847,8 @@
 
 <!-- 清空确认对话框 -->
 {#if showClearConfirm}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" tabindex="-1" on:click={hideClearConfirmDialog} on:keydown={(e) => e.key === 'Escape' && hideClearConfirmDialog()}>
-    <section class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4" role="document" on:click|stopPropagation>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" tabindex="-1" on:keydown={(e) => e.key === 'Escape' && hideClearConfirmDialog()}>
+    <section class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4" role="document">
       <h3 class="text-lg font-semibold text-white mb-4">确认清空名单</h3>
       <p class="text-gray-300 mb-6">
         您确定要清空所有追踪玩家吗？此操作不可撤销，将删除 <span class="text-red-400 font-semibold">{players.length}</span> 个玩家。
@@ -880,13 +875,18 @@
 
 <!-- 批量操作确认对话框 -->
 {#if showBulkConfirm}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true">
-    <section class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4" role="document" on:click|stopPropagation>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" tabindex="-1" on:keydown={(e) => e.key === 'Escape' && (showBulkConfirm = false)}>
+    <section class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4" role="document">
       <h3 class="text-lg font-semibold text-white mb-4">确认批量操作</h3>
       <p class="text-gray-300 mb-6">
         您确定要对选中的 <span class="text-blue-400 font-semibold">{selectedPlayerIds.size}</span> 个玩家执行
         <span class="text-yellow-400 font-semibold">
-          {#if bulkAction === 'activate'}激活追踪{:else if bulkAction === 'deactivate'}停用追踪{:else if bulkAction === 'notifications'}开启通知{:else if bulkAction === 'delete'}删除操作{/if}
+          {#if bulkAction === 'activate'}激活追踪
+          {:else if bulkAction === 'deactivate'}停用追踪
+          {:else if bulkAction === 'enable-notifications'}开启通知
+          {:else if bulkAction === 'disable-notifications'}关闭通知
+          {:else if bulkAction === 'delete'}删除操作
+          {/if}
         </span>
         吗？
         {#if bulkAction === 'delete'}
@@ -897,16 +897,16 @@
         <button
           class="btn-secondary"
           on:click={() => showBulkConfirm = false}
-          disabled={isLoading}
+          disabled={isBulkLoading}
         >
           取消
         </button>
         <button
           class="btn-{bulkAction === 'delete' ? 'danger' : 'primary'}"
           on:click={executeBulkAction}
-          disabled={isLoading}
+          disabled={isBulkLoading}
         >
-          {isLoading ? '执行中...' : '确认执行'}
+          {isBulkLoading ? '执行中...' : '确认执行'}
         </button>
       </div>
     </section>
@@ -915,17 +915,23 @@
 
 <!-- 导入玩家对话框 -->
 {#if showImportDialog}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true">
-    <section class="bg-gray-800 rounded-lg p-6 max-w-lg w-full mx-4 max-h-96" role="document" on:click|stopPropagation>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" tabindex="-1" on:keydown={(e) => e.key === 'Escape' && (showImportDialog = false)}>
+    <div class="bg-gray-800 rounded-lg p-6 max-w-lg w-full mx-4 max-h-96" role="document">
       <h3 class="text-lg font-semibold text-white mb-4">批量导入玩家</h3>
       
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-300 mb-2">
+        <label for="import-players-textarea" class="block text-sm font-medium text-gray-300 mb-2">
           输入玩家名（每行一个，或 JSON 格式）
         </label>
         <textarea
+          id="import-players-textarea"
           class="input-field w-full h-32 resize-none"
-          placeholder="玩家1&#10;玩家2&#10;玩家3&#10;&#10;或者 JSON 格式：&#10;[&quot;玩家1&quot;, &quot;玩家2&quot;, &quot;玩家3&quot;]"
+          placeholder={`玩家1
+玩家2
+玩家3
+
+或者 JSON 格式：
+["玩家1", "玩家2", "玩家3"]`}
           bind:value={importText}
           disabled={isLoading}
         ></textarea>
@@ -954,6 +960,6 @@
           {isLoading ? '导入中...' : '开始导入'}
         </button>
       </div>
-    </section>
+    </div>
   </div>
 {/if}

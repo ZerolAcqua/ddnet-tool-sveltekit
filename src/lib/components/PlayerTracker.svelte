@@ -100,9 +100,15 @@
     for (const newPlayer of newResults) {
       const oldPlayer = previousResults.find(p => p.player === newPlayer.player);
       
-      // 如果玩家之前离线，现在在线，或者是新检测到的玩家
-      if (!oldPlayer || (oldPlayer.isOnline === false && newPlayer.isOnline === true)) {
-        newlyOnlinePlayers.push(newPlayer);
+      // 只有当玩家真正在线，且状态从离线变为在线时才发送通知
+      if (newPlayer.isOnline === true) {
+        if (!oldPlayer) {
+          // 新检测到的玩家，且确实在线
+          newlyOnlinePlayers.push(newPlayer);
+        } else if (oldPlayer.isOnline === false) {
+          // 之前离线，现在上线
+          newlyOnlinePlayers.push(newPlayer);
+        }
       }
     }
 
