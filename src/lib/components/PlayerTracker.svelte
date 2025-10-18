@@ -36,6 +36,7 @@
   let lastManualRefresh = 0;
   const DEBOUNCE = 1500; // 1.5秒防抖
   let notificationPermission: NotificationPermission = "default";
+  let isInitialLoad = true; // 标记是否是应用首次加载
 
   let countdown = Math.floor(REFRESH_INTERVAL / 1000); // 剩余秒数
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
@@ -88,13 +89,7 @@
 
   // 检测玩家状态变化
   function detectPlayerStatusChanges(newResults: PlayerItem[]) {
-    if (previousResults.length === 0) {
-      // 首次加载，不发送通知
-      previousResults = [...newResults];
-      return;
-    }
-
-    // 收集所有新上线的玩家
+    // 收集所有新上线且启用通知的玩家
     const newlyOnlinePlayers: PlayerItem[] = [];
     
     for (const newPlayer of newResults) {
@@ -102,12 +97,22 @@
       
       // 只有当玩家真正在线，且状态从离线变为在线时才发送通知
       if (newPlayer.isOnline === true) {
-        if (!oldPlayer) {
-          // 新检测到的玩家，且确实在线
-          newlyOnlinePlayers.push(newPlayer);
-        } else if (oldPlayer.isOnline === false) {
-          // 之前离线，现在上线
-          newlyOnlinePlayers.push(newPlayer);
+        // 检查该玩家是否启用了通知
+        const trackedPlayer = trackedPlayers.find(tp => tp.playerName === newPlayer.player);
+        const shouldNotify = trackedPlayer && trackedPlayer.notificationEnabled;
+        
+        if (shouldNotify) {
+          if (!oldPlayer) {
+            // 新检测到的玩家，且确实在线
+            // 只有在应用真正首次加载时才不通知（即isInitialLoad=true且之前从未有过结果）
+            const isAppFirstLoad = isInitialLoad;
+            if (!isAppFirstLoad) {
+              newlyOnlinePlayers.push(newPlayer);
+            }
+          } else if (oldPlayer.isOnline === false) {
+            // 之前离线，现在上线
+            newlyOnlinePlayers.push(newPlayer);
+          }
         }
       }
     }
@@ -117,6 +122,11 @@
     }
 
     previousResults = [...newResults];
+    
+    // 首次检测完成后，标记为非首次加载
+    if (isInitialLoad) {
+      isInitialLoad = false;
+    }
   }
 
   // 加载追踪玩家列表
@@ -144,6 +154,8 @@
 
     if (activePlayerNames.length === 0) {
       results = [];
+      // 当没有激活的玩家时，重置状态以便下次激活玩家时能正确触发通知
+      detectPlayerStatusChanges([]);
       return;
     }
 

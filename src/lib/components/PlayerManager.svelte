@@ -35,7 +35,7 @@
   
   // 新增：搜索和筛选相关状态
   let searchQuery = '';
-  let filterStatus: 'all' | 'active' | 'inactive' = 'all';
+  let filterStatus: 'all' | 'tracking-on' | 'tracking-off' | 'notification-on' | 'notification-off' = 'all';
   let sortBy: 'name' | 'created' | 'status' = 'name';
   let sortOrder: 'asc' | 'desc' = 'asc';
   let currentPage = 1;
@@ -64,8 +64,10 @@
       
       // 状态筛选
       const matchesStatus = filterStatus === 'all' || 
-        (filterStatus === 'active' && player.isActive) ||
-        (filterStatus === 'inactive' && !player.isActive);
+        (filterStatus === 'tracking-on' && player.isActive) ||
+        (filterStatus === 'tracking-off' && !player.isActive) ||
+        (filterStatus === 'notification-on' && player.notificationEnabled) ||
+        (filterStatus === 'notification-off' && !player.notificationEnabled);
       
       return matchesSearch && matchesStatus;
     })
@@ -599,8 +601,10 @@
             <div>
               <select class="input-field w-full text-sm" bind:value={filterStatus} disabled={isLoading}>
                 <option value="all">全部状态</option>
-                <option value="active">已激活</option>
-                <option value="inactive">未激活</option>
+                <option value="tracking-on">已追踪</option>
+                <option value="tracking-off">未追踪</option>
+                <option value="notification-on">通知开启</option>
+                <option value="notification-off">通知关闭</option>
               </select>
             </div>
             
@@ -643,38 +647,6 @@
             </div>
           </div>
         </div>
-
-        <!-- 批量操作区域 -->
-        {#if selectedPlayerIds.size > 0}
-          <div class="mb-4 p-3 border border-blue-500 rounded-lg bg-blue-900/20">
-            <div class="flex items-center justify-between">
-              <span class="text-blue-300 text-sm">已选中 {selectedPlayerIds.size} 个玩家</span>
-              <div class="flex items-center gap-2">
-                <select class="input-field text-sm py-1 min-w-32" bind:value={bulkAction} disabled={isLoading || isBulkLoading}>
-                  <option value="activate">激活追踪</option>
-                  <option value="deactivate">停用追踪</option>
-                  <option value="enable-notifications">开启通知</option>
-                  <option value="disable-notifications">关闭通知</option>
-                  <option value="delete">删除玩家</option>
-                </select>
-                <button
-                  class="btn-primary-sm whitespace-nowrap"
-                  on:click={() => showBulkConfirm = true}
-                  disabled={isLoading || isBulkLoading}
-                >
-                  执行操作
-                </button>
-                <button
-                  class="btn-secondary-sm whitespace-nowrap"
-                  on:click={() => selectedPlayerIds = new Set()}
-                  disabled={isLoading || isBulkLoading}
-                >
-                  取消选择
-                </button>
-              </div>
-            </div>
-          </div>
-        {/if}
       {/if}
 
       <!-- 玩家列表 -->
@@ -732,20 +704,39 @@
               {:else}
                 <!-- 显示模式 -->
                 <div class="flex items-center justify-between gap-4">
-                  <div class="flex items-center gap-3 flex-1">
-                    {#if players.length > 5}
+                  {#if players.length > 5}
+                    <!-- 可点击的左侧区域（用于批量选择） -->
+                    <div 
+                      class="flex items-center gap-3 flex-1 cursor-pointer hover:bg-gray-700/30 rounded-md p-2 -m-2 transition-colors"
+                      on:click={() => togglePlayerSelection(player.id)}
+                      role="button"
+                      tabindex="0"
+                      on:keydown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          togglePlayerSelection(player.id);
+                        }
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={selectedPlayerIds.has(player.id)}
-                        on:change={() => togglePlayerSelection(player.id)}
-                        class="checkbox flex-shrink-0"
+                        class="checkbox flex-shrink-0 pointer-events-none"
                         disabled={isLoading}
+                        readonly
                       />
-                    {/if}
-                    <div class="flex-1 min-w-0">
-                      <span class="text-white font-medium truncate block">{player.playerName}</span>
+                      <div class="flex-1 min-w-0">
+                        <span class="text-white font-medium truncate block">{player.playerName}</span>
+                      </div>
                     </div>
-                  </div>
+                  {:else}
+                    <!-- 没有批量选择时的普通布局 -->
+                    <div class="flex items-center gap-3 flex-1">
+                      <div class="flex-1 min-w-0">
+                        <span class="text-white font-medium truncate block">{player.playerName}</span>
+                      </div>
+                    </div>
+                  {/if}
                   
                   <!-- 右侧控制区域 -->
                   <div class="flex items-center gap-2 flex-shrink-0">
@@ -835,6 +826,38 @@
             </div>
           {/if}
         </div>
+        
+        <!-- 批量操作区域 - 放在列表下面 -->
+        {#if selectedPlayerIds.size > 0}
+          <div class="mt-4 p-3 border border-blue-500 rounded-lg bg-blue-900/20">
+            <div class="flex items-center justify-between">
+              <span class="text-blue-300 text-sm">已选中 {selectedPlayerIds.size} 个玩家</span>
+              <div class="flex items-center gap-2">
+                <select class="input-field text-sm py-1 min-w-32" bind:value={bulkAction} disabled={isLoading || isBulkLoading}>
+                  <option value="activate">激活追踪</option>
+                  <option value="deactivate">停用追踪</option>
+                  <option value="enable-notifications">开启通知</option>
+                  <option value="disable-notifications">关闭通知</option>
+                  <option value="delete">删除玩家</option>
+                </select>
+                <button
+                  class="btn-primary-sm whitespace-nowrap"
+                  on:click={() => showBulkConfirm = true}
+                  disabled={isLoading || isBulkLoading}
+                >
+                  执行操作
+                </button>
+                <button
+                  class="btn-secondary-sm whitespace-nowrap"
+                  on:click={() => selectedPlayerIds = new Set()}
+                  disabled={isLoading || isBulkLoading}
+                >
+                  取消选择
+                </button>
+              </div>
+            </div>
+          </div>
+        {/if}
       {:else}
         <div class="text-center py-8">
           <p class="text-gray-400">暂无追踪的玩家</p>
