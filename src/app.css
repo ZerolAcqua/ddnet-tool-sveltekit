@@ -14,36 +14,36 @@ body {
 /* 自定义组件样式 */
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium;
+    @apply px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors font-medium;
   }
   
   .btn-secondary {
-    @apply px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium;
+    @apply px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium;
   }
   
   .btn-danger {
-    @apply px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium;
+    @apply px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition-colors font-medium;
   }
   
   .btn-warning {
-    @apply px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium;
+    @apply px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium;
   }
   
   /* 小尺寸按钮变体 */
   .btn-primary-sm {
-    @apply px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm;
+    @apply px-3 py-1 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors font-medium text-sm;
   }
   
   .btn-secondary-sm {
-    @apply px-3 py-1 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium text-sm;
+    @apply px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium text-sm;
   }
   
   .btn-danger-sm {
-    @apply px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm;
+    @apply px-3 py-1 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition-colors font-medium text-sm;
   }
   
   .btn-warning-sm {
-    @apply px-3 py-1 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium text-sm;
+    @apply px-3 py-1 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium text-sm;
   }
   
   /* 图标按钮 */

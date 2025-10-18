@@ -250,7 +250,7 @@
     <!-- 返回首页链接 -->
     <div class="mt-4 text-center">
       <a href="/" class="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-        ← 返回首页
+        返回首页
       </a>
     </div>
   </div>

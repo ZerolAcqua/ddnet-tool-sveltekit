@@ -87,7 +87,7 @@
   <!-- 返回首页 -->
   <div class="mt-8 text-center">
     <a href="/" class="text-gray-400 hover:text-white transition-colors">
-      ← 返回首页
+      返回首页
     </a>
   </div>
 </div>

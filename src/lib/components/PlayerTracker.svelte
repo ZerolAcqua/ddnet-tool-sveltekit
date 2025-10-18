@@ -270,56 +270,80 @@
   <PlayerManager players={trackedPlayers} onUpdate={handleTrackingUpdate} />
 
   <!-- 控制面板 -->
-  <div class="card">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div>
-        <h3 class="text-lg font-semibold mb-2">追踪状态</h3>
-        <div class="flex items-center gap-4 text-sm text-gray-300">
-          <span>追踪玩家: {trackedPlayers.filter(p => p.isActive).length}/{trackedPlayers.length}</span>
-          <span>在线玩家: {results.filter(p => p.isOnline !== false).length}</span>
+  <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6">
+    <h3 class="text-lg font-semibold mb-4 text-white">追踪状态</h3>
+    
+    <!-- 统计卡片 -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div class="bg-gray-700/30 rounded-lg p-4 border border-gray-600/30">
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">追踪玩家</div>
+        <div class="text-2xl font-bold text-white">
+          {trackedPlayers.filter(p => p.isActive).length}
+          <span class="text-lg text-gray-400">/{trackedPlayers.length}</span>
         </div>
       </div>
-
-      <div class="flex items-center gap-3">
-        <!-- 通知开关 -->
-        <label class="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={notificationsEnabled}
-            on:change={toggleNotifications}
-            class="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
-          />
-          <span class="text-gray-300">通知提醒</span>
-        </label>
-
-        <!-- 自动刷新状态 -->
-        <div class="text-sm text-gray-400">
-          下次刷新: {formatTime(countdown)}
+      
+      <div class="bg-gray-700/30 rounded-lg p-4 border border-gray-600/30">
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">在线玩家</div>
+        <div class="text-2xl font-bold text-emerald-400">
+          {results.filter(p => p.isOnline !== false).length}
         </div>
-
-        <!-- 手动刷新按钮 -->
-        <button
-          class="btn-primary flex items-center gap-2"
-          on:click={manualRefresh}
-          disabled={loading}
-        >
-          {loading ? '查询中...' : '立即刷新'}
-        </button>
+      </div>
+      
+      <div class="bg-gray-700/30 rounded-lg p-4 border border-gray-600/30">
+        <div class="text-xs text-gray-400 uppercase tracking-wide mb-1">下次刷新</div>
+        <div class="text-2xl font-bold text-slate-400">
+          {formatTime(countdown)}
+        </div>
       </div>
     </div>
 
+    <!-- 操作区域 -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-gray-700/50">
+      <label class="flex items-center gap-3 text-sm">
+        <input
+          type="checkbox"
+          checked={notificationsEnabled}
+          on:change={toggleNotifications}
+          class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-slate-600 focus:ring-slate-500 focus:ring-2"
+        />
+        <span class="text-gray-300">启用上线通知提醒</span>
+      </label>
+
+      <button
+        class="btn-primary"
+        on:click={manualRefresh}
+        disabled={loading}
+      >
+        {loading ? '查询中...' : '立即刷新'}
+      </button>
+    </div>
+
     {#if notificationPermission === "denied"}
-      <div class="mt-4 p-3 bg-yellow-900/50 border border-yellow-500 rounded-lg">
-        <p class="text-yellow-300 text-sm">
-          <strong>通知权限被拒绝：</strong> 无法发送上线通知，请在浏览器设置中允许通知权限。
-        </p>
+      <div class="mt-4 p-4 bg-amber-900/20 border border-amber-700/50 rounded-lg">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 w-5 h-5 rounded-full bg-amber-700/50 flex items-center justify-center mt-0.5">
+            <span class="text-amber-400 text-xs font-bold">!</span>
+          </div>
+          <div>
+            <p class="text-amber-300 text-sm font-medium mb-1">通知权限被拒绝</p>
+            <p class="text-amber-200/80 text-xs">无法发送上线通知，请在浏览器设置中允许通知权限。</p>
+          </div>
+        </div>
       </div>
     {/if}
   </div>
 
   <!-- 玩家状态列表 -->
   <div class="space-y-4">
-    <h3 class="text-xl font-semibold text-white">玩家状态</h3>
+    <div class="flex items-center justify-between">
+      <h3 class="text-xl font-semibold text-white">玩家状态</h3>
+      {#if results.length > 0}
+        <div class="text-sm text-gray-400">
+          共 {results.length} 个玩家
+        </div>
+      {/if}
+    </div>
 
     {#if loading && results.length === 0}
       <div class="card text-center py-8">
@@ -333,39 +357,16 @@
         {/each}
       </div>
     {:else if trackedPlayers.length === 0}
-      <div class="card text-center py-12">
-        <h4 class="text-xl font-semibold mb-2">开始追踪玩家</h4>
-        <p class="text-gray-400 mb-4">添加你想要追踪的 DDNet 玩家，实时了解他们的在线状态</p>
+      <div class="card text-center py-16">
+        <h4 class="text-xl font-semibold mb-3 text-white">开始追踪玩家</h4>
+        <p class="text-gray-400 mb-2">添加你想要追踪的 DDNet 玩家，实时了解他们的在线状态</p>
         <p class="text-gray-500 text-sm">点击上方的"管理追踪玩家"按钮开始添加</p>
       </div>
     {:else}
-      <div class="card text-center py-8">
-        <h4 class="text-lg font-semibold mb-2">所有玩家都离线了</h4>
+      <div class="card text-center py-12">
+        <h4 class="text-lg font-semibold mb-2 text-white">所有玩家都离线了</h4>
         <p class="text-gray-400">系统会自动检查玩家状态，他们上线时会收到通知</p>
       </div>
     {/if}
-  </div>
-
-  <!-- 功能说明 -->
-  <div class="card">
-    <h4 class="font-semibold mb-3">功能说明</h4>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
-      <div>
-        <h5 class="font-medium text-white mb-2">追踪功能</h5>
-        <ul class="space-y-1">
-          <li>• 实时监控玩家在线状态</li>
-          <li>• 每 2 分钟自动刷新</li>
-          <li>• 支持启用/禁用单个玩家追踪</li>
-        </ul>
-      </div>
-      <div>
-        <h5 class="font-medium text-white mb-2">通知提醒</h5>
-        <ul class="space-y-1">
-          <li>• 玩家上线时自动通知</li>
-          <li>• 可选择开启/关闭通知</li>
-          <li>• 点击玩家卡片复制服务器地址</li>
-        </ul>
-      </div>
-    </div>
   </div>
 </div>
