@@ -89,6 +89,11 @@
           <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
           在线
         </span>
+        {#if player.server && player.server !== '未知'}
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-900/50 text-blue-300">
+            {player.server}
+          </span>
+        {/if}
       {:else}
         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-600 text-gray-400">
           <span class="w-1.5 h-1.5 bg-gray-500 rounded-full mr-1"></span>

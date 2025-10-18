@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from '$app/environment';
+  import { onDestroy } from 'svelte';
   
   // 自动聚焦指令
   function focusOnMount(element: HTMLInputElement) {
@@ -15,7 +16,7 @@
   }
 
   export let players: TrackedPlayer[] = [];
-  export let onUpdate: () => void = () => {};
+  export let onUpdate: (shouldSearch?: boolean) => void = () => {};
 
   let newPlayerName = '';
   let editingId: string | null = null;
@@ -24,6 +25,12 @@
   let isLoading = false;
   let message = '';
   let showClearConfirm = false;
+  
+  // 防抖相关变量
+  let updateTimer: ReturnType<typeof setTimeout> | null = null;
+  const UPDATE_DEBOUNCE = 800; // 玩家设置更新防抖时间
+  let editTimer: ReturnType<typeof setTimeout> | null = null;
+  const EDIT_DEBOUNCE = 500; // 编辑操作防抖时间
   
   // 新增：搜索和筛选相关状态
   let searchQuery = '';
@@ -96,6 +103,12 @@
       return;
     }
 
+    // 清除之前的编辑防抖定时器
+    if (editTimer) {
+      clearTimeout(editTimer);
+      editTimer = null;
+    }
+
     isLoading = true;
     message = '';
 
@@ -115,7 +128,9 @@
       if (result.success) {
         newPlayerName = '';
         message = result.message;
-        onUpdate();
+        
+        // 使用防抖更新列表 - 添加玩家需要搜索
+        debounceUpdate(true);
       } else {
         message = result.message;
       }
@@ -130,6 +145,12 @@
   async function removePlayer(id: string) {
     if (isLoading) return;
 
+    // 清除之前的编辑防抖定时器
+    if (editTimer) {
+      clearTimeout(editTimer);
+      editTimer = null;
+    }
+
     isLoading = true;
     message = '';
 
@@ -142,7 +163,7 @@
 
       if (result.success) {
         message = result.message;
-        onUpdate();
+        debounceUpdate(true); // 删除玩家需要搜索
       } else {
         message = result.message;
       }
@@ -156,6 +177,12 @@
 
   async function updatePlayerSettings(id: string, updates: { isActive?: boolean; notificationEnabled?: boolean }) {
     if (isLoading) return;
+
+    // 清除之前的更新防抖定时器
+    if (updateTimer) {
+      clearTimeout(updateTimer);
+      updateTimer = null;
+    }
 
     isLoading = true;
 
@@ -171,7 +198,8 @@
       const result = await response.json();
 
       if (result.success) {
-        onUpdate();
+        // 使用防抖更新列表，状态更新不需要搜索
+        debounceUpdate(false);
       } else {
         message = result.message;
       }
@@ -200,6 +228,12 @@
       return;
     }
 
+    // 清除之前的编辑防抖定时器
+    if (editTimer) {
+      clearTimeout(editTimer);
+      editTimer = null;
+    }
+
     isLoading = true;
     message = '';
 
@@ -219,7 +253,7 @@
       if (result.success) {
         message = '玩家名更新成功';
         cancelEdit();
-        onUpdate();
+        debounceUpdate(false); // 编辑玩家名不需要搜索
       } else {
         message = result.message;
       }
@@ -257,6 +291,19 @@
     message = '';
   }
 
+  // 防抖更新函数
+  function debounceUpdate(shouldSearch = false) {
+    // 清除之前的防抖定时器
+    if (updateTimer) {
+      clearTimeout(updateTimer);
+    }
+    
+    // 设置新的防抖定时器
+    updateTimer = setTimeout(() => {
+      onUpdate(shouldSearch);
+    }, UPDATE_DEBOUNCE);
+  }
+
   // 清空所有玩家
   async function clearAllPlayers() {
     if (isLoading || players.length === 0) return;
@@ -274,7 +321,7 @@
       if (result.success) {
         message = result.message;
         showClearConfirm = false;
-        onUpdate();
+        debounceUpdate();
       } else {
         message = result.message;
       }
@@ -340,7 +387,9 @@
       selectedPlayerIds = new Set();
       showBulkConfirm = false;
       message = `批量操作完成，影响 ${promises.length} 个玩家`;
-      onUpdate();
+      
+      // 批量操作后使用防抖更新
+      debounceUpdate();
       
     } catch (error) {
       console.error('批量操作失败:', error);
@@ -430,7 +479,7 @@
       message = `导入完成：成功 ${successCount} 个，重复 ${duplicateCount} 个`;
       importText = '';
       showImportDialog = false;
-      onUpdate();
+      debounceUpdate();
       
     } catch (error) {
       console.error('导入失败:', error);
@@ -444,6 +493,18 @@
   $: if (message && browser) {
     setTimeout(clearMessage, 5000);
   }
+
+  // 组件销毁时清理定时器
+  onDestroy(() => {
+    if (updateTimer) {
+      clearTimeout(updateTimer);
+      updateTimer = null;
+    }
+    if (editTimer) {
+      clearTimeout(editTimer);
+      editTimer = null;
+    }
+  });
 </script>
 
 <div class="mb-6">
@@ -525,7 +586,7 @@
 
       <!-- 搜索和筛选区域 -->
       {#if players.length > 5}
-        <div class="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-600/50">
+        <div class="mb-6 p-4 border border-gray-600 rounded-lg bg-gray-800">
           <h5 class="text-sm font-medium text-gray-300 mb-3">搜索和筛选</h5>
           
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -591,7 +652,7 @@
 
         <!-- 批量操作区域 -->
         {#if selectedPlayerIds.size > 0}
-          <div class="mb-4 p-3 bg-blue-900/20 border border-blue-500/50 rounded-lg">
+          <div class="mb-4 p-3 border border-blue-500 rounded-lg bg-blue-900/20">
             <div class="flex items-center justify-between">
               <span class="text-blue-300 text-sm">已选中 {selectedPlayerIds.size} 个玩家</span>
               <div class="flex items-center gap-2">
@@ -633,7 +694,7 @@
                   checked={selectedPlayerIds.size === paginatedPlayers.length && paginatedPlayers.length > 0}
                   indeterminate={selectedPlayerIds.size > 0 && selectedPlayerIds.size < paginatedPlayers.length}
                   on:change={toggleSelectAll}
-                  class="rounded border-gray-600 bg-gray-700 text-blue-600"
+                  class="checkbox"
                   disabled={isLoading || paginatedPlayers.length === 0}
                 />
                 全选本页
@@ -641,7 +702,7 @@
             {/if}
           </div>
           {#each paginatedPlayers as player (player.id)}
-            <div class="bg-gray-700 rounded-lg p-4">
+            <div class="border border-gray-600 rounded-lg p-4 bg-gray-800">
               {#if editingId === player.id}
                 <!-- 编辑模式 -->
                 <div class="flex-1 mb-3">
@@ -675,44 +736,47 @@
                 </div>
               {:else}
                 <!-- 显示模式 -->
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-4">
                   <div class="flex items-center gap-3 flex-1">
                     {#if players.length > 5}
                       <input
                         type="checkbox"
                         checked={selectedPlayerIds.has(player.id)}
                         on:change={() => togglePlayerSelection(player.id)}
-                        class="rounded border-gray-600 bg-gray-700 text-blue-600"
+                        class="checkbox flex-shrink-0"
                         disabled={isLoading}
                       />
                     {/if}
-                    <div class="flex-1">
-                      <span class="text-white font-medium">{player.playerName}</span>
-                      <div class="flex items-center gap-3 mt-2">
-                      <label class="flex items-center gap-1 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={player.isActive}
-                          on:change={(e) => updatePlayerSettings(player.id, { isActive: (e.target as HTMLInputElement)?.checked ?? false })}
-                          disabled={isLoading}
-                          class="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span class="text-gray-300">启用追踪</span>
-                      </label>
-                      <label class="flex items-center gap-1 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={player.notificationEnabled}
-                          on:change={(e) => updatePlayerSettings(player.id, { notificationEnabled: (e.target as HTMLInputElement)?.checked ?? false })}
-                          disabled={isLoading}
-                          class="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span class="text-gray-300">通知提醒</span>
-                      </label>
-                    </div>
+                    <div class="flex-1 min-w-0">
+                      <span class="text-white font-medium truncate block">{player.playerName}</span>
                     </div>
                   </div>
-                  <div class="flex gap-2">
+                  
+                  <!-- 右侧控制区域 -->
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <!-- 追踪状态按钮 -->
+                    <button
+                      class="{player.isActive ? 'btn-status-active' : 'btn-status-inactive'}"
+                      on:click={() => updatePlayerSettings(player.id, { isActive: !player.isActive })}
+                      disabled={isLoading}
+                      title={player.isActive ? '点击停用追踪' : '点击启用追踪'}
+                    >
+                      <span class="hidden sm:inline">{player.isActive ? '已追踪' : '未追踪'}</span>
+                      <span class="sm:hidden">{player.isActive ? '追踪' : '停用'}</span>
+                    </button>
+                    
+                    <!-- 通知状态按钮 -->
+                    <button
+                      class="{player.notificationEnabled ? 'btn-status-notification-on' : 'btn-status-notification-off'}"
+                      on:click={() => updatePlayerSettings(player.id, { notificationEnabled: !player.notificationEnabled })}
+                      disabled={isLoading}
+                      title={player.notificationEnabled ? '点击关闭通知' : '点击开启通知'}
+                    >
+                      <span class="hidden sm:inline">{player.notificationEnabled ? '通知开' : '通知关'}</span>
+                      <span class="sm:hidden">{player.notificationEnabled ? '通知' : '静音'}</span>
+                    </button>
+                    
+                    <!-- 操作按钮 -->
                     <button
                       class="btn-warning-sm"
                       on:click={() => startEdit(player.id, player.playerName)}
@@ -737,7 +801,7 @@
           
           <!-- 分页控件 -->
           {#if totalPages > 1}
-            <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-600/50">
+            <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-600">
               <div class="text-sm text-gray-400">
                 第 {currentPage} 页，共 {totalPages} 页
               </div>
@@ -756,7 +820,7 @@
                   {@const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i}
                   {#if page <= totalPages}
                     <button
-                      class="px-3 py-1 text-sm rounded {page === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}"
+                      class="{page === currentPage ? 'btn-page-active' : 'btn-page-inactive'}"
                       on:click={() => changePage(page)}
                       disabled={isLoading}
                     >

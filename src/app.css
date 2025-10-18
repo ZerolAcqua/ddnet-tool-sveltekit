@@ -14,41 +14,75 @@ body {
 /* 自定义组件样式 */
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors font-medium;
+    @apply px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-slate-600;
   }
   
   .btn-secondary {
-    @apply px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium;
+    @apply px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-600;
   }
   
   .btn-danger {
-    @apply px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition-colors font-medium;
+    @apply px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-600;
   }
   
   .btn-warning {
-    @apply px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium;
+    @apply px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-amber-700;
   }
   
   /* 小尺寸按钮变体 */
   .btn-primary-sm {
-    @apply px-3 py-1 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors font-medium text-sm;
+    @apply px-3 py-1 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-slate-600;
   }
   
   .btn-secondary-sm {
-    @apply px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium text-sm;
+    @apply px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-600;
   }
   
   .btn-danger-sm {
-    @apply px-3 py-1 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition-colors font-medium text-sm;
+    @apply px-3 py-1 bg-rose-600 text-white rounded-lg hover:bg-rose-500 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-600;
   }
   
   .btn-warning-sm {
-    @apply px-3 py-1 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium text-sm;
+    @apply px-3 py-1 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-amber-700;
   }
   
   /* 图标按钮 */
   .btn-icon {
     @apply p-2 text-gray-400 hover:text-gray-300 transition-colors rounded;
+  }
+  
+  /* 状态按钮 */
+  .btn-status {
+    @apply px-3 py-1 text-sm rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-status-active {
+    @apply btn-status bg-green-600 text-white hover:bg-green-700 disabled:hover:bg-green-600;
+  }
+  
+  .btn-status-inactive {
+    @apply btn-status bg-gray-600 text-gray-300 hover:bg-gray-500 disabled:hover:bg-gray-600;
+  }
+  
+  .btn-status-notification-on {
+    @apply btn-status bg-blue-600 text-white hover:bg-blue-700 disabled:hover:bg-blue-600;
+  }
+  
+  .btn-status-notification-off {
+    @apply btn-status bg-gray-600 text-gray-300 hover:bg-gray-500 disabled:hover:bg-gray-600;
+  }
+  
+  /* 分页按钮 */
+  .btn-page {
+    @apply px-3 py-1 text-sm rounded transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-page-active {
+    @apply btn-page bg-blue-600 text-white;
+  }
+  
+  .btn-page-inactive {
+    @apply btn-page bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:hover:bg-gray-700;
   }
   
   .card {
@@ -57,5 +91,10 @@ body {
   
   .input-field {
     @apply w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+  
+  /* 复选框样式 */
+  .checkbox {
+    @apply rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 focus:ring-2;
   }
 }
