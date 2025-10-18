@@ -44,31 +44,25 @@
   {:else}
     <!-- 页面标题 -->
     <div class="card mb-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-white mb-2">管理面板</h1>
-          <p class="text-gray-300">系统管理和用户管理功能</p>
-        </div>
-        <div class="text-4xl">⚙️</div>
+      <div>
+        <h1 class="text-3xl font-bold text-white mb-2">管理面板</h1>
+        <p class="text-gray-300">系统管理和用户管理功能</p>
       </div>
     </div>
 
     <!-- 统计信息 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
       <div class="card text-center">
-        <div class="text-3xl mb-2">👥</div>
         <h3 class="text-xl font-semibold mb-1">用户总数</h3>
         <p class="text-gray-400">{users.length} 个用户</p>
       </div>
       
       <div class="card text-center">
-        <div class="text-3xl mb-2">🔧</div>
         <h3 class="text-xl font-semibold mb-1">工具数量</h3>
         <p class="text-gray-400">1 个工具</p>
       </div>
       
       <div class="card text-center">
-        <div class="text-3xl mb-2">📊</div>
         <h3 class="text-xl font-semibold mb-1">系统状态</h3>
         <p class="text-gray-400">运行正常</p>
       </div>

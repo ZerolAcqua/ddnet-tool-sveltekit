@@ -20,11 +20,11 @@
 
       <!-- 导航菜单 -->
       <div class="flex items-center space-x-6">
+        <a href="/tools" class="text-gray-300 hover:text-white transition-colors">
+          工具
+        </a>
+        
         {#if $authState.isAuthenticated}
-          <a href="/tools" class="text-gray-300 hover:text-white transition-colors">
-            工具
-          </a>
-          
           {#if $authState.user?.isAdmin}
             <a href="/admin" class="text-gray-300 hover:text-white transition-colors">
               管理面板
