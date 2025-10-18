@@ -9,19 +9,30 @@
   });
 </script>
 
+<svelte:head>
+  <title>丘卡的 DDTools</title>
+  <meta name="description" content="个人 DDNet 工具箱" />
+</svelte:head>
+
 <Navigation />
 
 <div class="container mx-auto max-w-7xl px-6 py-8">
   <!-- 网站介绍 -->
-  <div class="text-center py-12">
-    <h1 class="text-4xl font-bold text-white mb-4">DDNet 工具集</h1>
-    <p class="text-xl text-gray-300 mb-6">专为 DDNet 玩家打造的实用工具平台</p>
-    <div class="max-w-2xl mx-auto">
-      <p class="text-gray-400 leading-relaxed">
-        这里汇集了各种 DDNet 游戏相关的实用工具，帮助玩家更好地享受游戏体验。
-        从玩家追踪到服务器监控，从数据分析到游戏助手，我们致力于为 DDNet 社区提供
-        最好的工具支持。所有工具都经过精心设计，简单易用，完全免费。
-      </p>
+  <div class="min-h-[70vh] flex items-center justify-center">
+    <div class="text-center max-w-5xl mx-auto">
+      <div class="mb-16">
+        <h1 class="text-7xl font-bold text-white mb-6 tracking-tight">丘卡的 DDTools</h1>
+        <p class="text-3xl text-gray-300 font-light mb-8">个人 DDNet 工具箱</p>
+        <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto mb-12"></div>
+        <p class="text-2xl text-gray-400 leading-relaxed max-w-3xl mx-auto">
+          欢迎来到丘卡的 DDNet 工具箱！这里收集了一些我在 DDNet 游戏中用到的实用小工具。
+          界面简洁，功能实用，专注于解决实际需求。
+        </p>
+      </div>
+      
+      <div class="text-lg text-gray-500">
+        通过导航栏访问工具
+      </div>
     </div>
   </div>
 

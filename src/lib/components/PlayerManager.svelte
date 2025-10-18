@@ -23,6 +23,7 @@
   let isVisible = false;
   let isLoading = false;
   let message = '';
+  let showClearConfirm = false;
 
   // 检查编辑中的玩家名是否与其他玩家重复
   $: isEditNameDuplicate = editingId !== null && editingName.trim() !== '' && 
@@ -141,12 +142,8 @@
     message = '';
 
     try {
-      // 删除旧玩家，添加新玩家（因为玩家名是唯一标识）
-      await removePlayer(editingId);
-      
-      // 重新添加
-      const response = await fetch('/api/tools/player-tracker', {
-        method: 'POST',
+      const response = await fetch(`/api/tools/player-tracker/${editingId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -198,6 +195,43 @@
     message = '';
   }
 
+  // 清空所有玩家
+  async function clearAllPlayers() {
+    if (isLoading || players.length === 0) return;
+
+    isLoading = true;
+    message = '';
+
+    try {
+      const response = await fetch('/api/tools/player-tracker', {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        message = result.message;
+        showClearConfirm = false;
+        onUpdate();
+      } else {
+        message = result.message;
+      }
+    } catch (error) {
+      console.error('清空玩家列表失败:', error);
+      message = '清空失败，请稍后重试';
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  function showClearConfirmDialog() {
+    showClearConfirm = true;
+  }
+
+  function hideClearConfirmDialog() {
+    showClearConfirm = false;
+  }
+
   // 自动清除消息
   $: if (message && browser) {
     setTimeout(clearMessage, 5000);
@@ -228,7 +262,7 @@
         <div class="mb-4 p-3 bg-blue-900/50 border border-blue-500 rounded-lg">
           <div class="flex justify-between items-center">
             <p class="text-blue-300 text-sm">{message}</p>
-            <button on:click={clearMessage} class="text-blue-400 hover:text-blue-300" title="关闭消息">
+            <button on:click={clearMessage} class="btn-icon" title="关闭消息">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -249,7 +283,7 @@
             disabled={isLoading}
           />
           <button
-            class="btn-primary px-4 py-2"
+            class="btn-primary"
             on:click={addPlayer}
             disabled={!newPlayerName.trim() || players.some(p => p.playerName === newPlayerName.trim()) || isLoading}
           >
@@ -264,7 +298,17 @@
       <!-- 玩家列表 -->
       {#if players.length > 0}
         <div class="space-y-3">
-          <h4 class="text-md font-medium text-gray-300 mb-3">当前追踪的玩家：</h4>
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="text-md font-medium text-gray-300">当前追踪的玩家：</h4>
+            <button
+              class="btn-danger-sm"
+              on:click={showClearConfirmDialog}
+              disabled={isLoading}
+              title="清空所有追踪玩家"
+            >
+              清空名单
+            </button>
+          </div>
           {#each players as player (player.id)}
             <div class="bg-gray-700 rounded-lg p-4">
               {#if editingId === player.id}
@@ -284,14 +328,14 @@
                 </div>
                 <div class="flex gap-2">
                   <button
-                    class="btn-primary px-3 py-1 text-sm"
+                    class="btn-primary-sm"
                     on:click={saveEdit}
                     disabled={!editingName.trim() || isEditNameDuplicate || isLoading}
                   >
                     {isLoading ? '保存中...' : '保存'}
                   </button>
                   <button
-                    class="btn-secondary px-3 py-1 text-sm"
+                    class="btn-secondary-sm"
                     on:click={cancelEdit}
                     disabled={isLoading}
                   >
@@ -328,7 +372,7 @@
                   </div>
                   <div class="flex gap-2">
                     <button
-                      class="px-3 py-1 bg-amber-600 text-white text-sm rounded hover:bg-amber-700 transition-colors"
+                      class="btn-warning-sm"
                       on:click={() => startEdit(player.id, player.playerName)}
                       disabled={isLoading}
                       title="编辑玩家名"
@@ -336,7 +380,7 @@
                       编辑
                     </button>
                     <button
-                      class="btn-danger px-3 py-1 text-sm"
+                      class="btn-danger-sm"
                       on:click={() => removePlayer(player.id)}
                       disabled={isLoading}
                       title="移除玩家"
@@ -351,7 +395,6 @@
         </div>
       {:else}
         <div class="text-center py-8">
-          <div class="text-4xl mb-2">👥</div>
           <p class="text-gray-400">暂无追踪的玩家</p>
           <p class="text-gray-500 text-sm mt-1">在上方输入框中添加要追踪的玩家</p>
         </div>
@@ -359,3 +402,31 @@
     </div>
   {/if}
 </div>
+
+<!-- 清空确认对话框 -->
+{#if showClearConfirm}
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" on:click={hideClearConfirmDialog} on:keydown={(e) => e.key === 'Escape' && hideClearConfirmDialog()}>
+    <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4" role="document" on:click|stopPropagation on:keydown>
+      <h3 class="text-lg font-semibold text-white mb-4">确认清空名单</h3>
+      <p class="text-gray-300 mb-6">
+        您确定要清空所有追踪玩家吗？此操作不可撤销，将删除 <span class="text-red-400 font-semibold">{players.length}</span> 个玩家。
+      </p>
+      <div class="flex gap-3 justify-end">
+        <button
+          class="btn-secondary"
+          on:click={hideClearConfirmDialog}
+          disabled={isLoading}
+        >
+          取消
+        </button>
+        <button
+          class="btn-danger"
+          on:click={clearAllPlayers}
+          disabled={isLoading}
+        >
+          {isLoading ? '清空中...' : '确认清空'}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

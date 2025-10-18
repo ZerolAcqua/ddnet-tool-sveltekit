@@ -93,3 +93,32 @@ export const POST = async ({ request, cookies }: RequestEvent) => {
     return json({ success: false, message: '添加失败，请稍后重试' }, { status: 500 });
   }
 };
+
+// 清空所有追踪玩家
+export const DELETE = async ({ cookies }: RequestEvent) => {
+  try {
+    const sessionToken = cookies.get('session');
+    if (!sessionToken) {
+      return json({ success: false, message: '请先登录' }, { status: 401 });
+    }
+
+    const user = await verifySession(sessionToken);
+    if (!user) {
+      return json({ success: false, message: '会话已过期，请重新登录' }, { status: 401 });
+    }
+
+    // 删除用户的所有追踪玩家
+    const result = await db.delete(trackedPlayers)
+      .where(eq(trackedPlayers.userId, user.id))
+      .returning();
+
+    return json({ 
+      success: true, 
+      message: `已清空追踪列表，共移除 ${result.length} 个玩家`
+    });
+
+  } catch (error) {
+    console.error('清空追踪玩家列表失败:', error);
+    return json({ success: false, message: '清空失败，请稍后重试' }, { status: 500 });
+  }
+};

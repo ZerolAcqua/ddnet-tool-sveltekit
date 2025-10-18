@@ -77,9 +77,7 @@
     if (!notificationsEnabled) {
       // 如果要开启通知，需要请求权限
       const permission = await requestNotificationPermission();
-      if (permission === "granted") {
-        notificationsEnabled = true;
-      }
+      notificationsEnabled = (permission === "granted");
     } else {
       notificationsEnabled = false;
     }
@@ -287,7 +285,7 @@
         <label class="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
-            bind:checked={notificationsEnabled}
+            checked={notificationsEnabled}
             on:change={toggleNotifications}
             class="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
           />
@@ -301,13 +299,10 @@
 
         <!-- 手动刷新按钮 -->
         <button
-          class="btn-primary px-4 py-2 flex items-center gap-2"
+          class="btn-primary flex items-center gap-2"
           on:click={manualRefresh}
           disabled={loading}
         >
-          <svg class="w-4 h-4 {loading ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
           {loading ? '查询中...' : '立即刷新'}
         </button>
       </div>
@@ -339,14 +334,12 @@
       </div>
     {:else if trackedPlayers.length === 0}
       <div class="card text-center py-12">
-        <div class="text-6xl mb-4">🎯</div>
         <h4 class="text-xl font-semibold mb-2">开始追踪玩家</h4>
         <p class="text-gray-400 mb-4">添加你想要追踪的 DDNet 玩家，实时了解他们的在线状态</p>
         <p class="text-gray-500 text-sm">点击上方的"管理追踪玩家"按钮开始添加</p>
       </div>
     {:else}
       <div class="card text-center py-8">
-        <div class="text-4xl mb-4">😴</div>
         <h4 class="text-lg font-semibold mb-2">所有玩家都离线了</h4>
         <p class="text-gray-400">系统会自动检查玩家状态，他们上线时会收到通知</p>
       </div>

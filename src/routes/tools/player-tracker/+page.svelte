@@ -16,12 +16,9 @@
 <div class="container mx-auto max-w-7xl px-6 py-8">
   <!-- 页面标题 -->
   <div class="card mb-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-white mb-2">DDNet 玩家追踪器</h1>
-        <p class="text-gray-300">实时追踪你关心的 DDNet 玩家在线状态，支持上线通知和服务器信息查看。</p>
-      </div>
-      <div class="text-4xl">🎯</div>
+    <div>
+      <h1 class="text-3xl font-bold text-white mb-2">DDNet 玩家追踪器</h1>
+      <p class="text-gray-300">实时追踪你关心的 DDNet 玩家在线状态，支持上线通知和服务器信息查看。</p>
     </div>
   </div>
 
@@ -31,7 +28,7 @@
   <!-- 返回链接 -->
   <div class="mt-8 text-center">
     <a href="/tools" class="text-gray-400 hover:text-white transition-colors">
-      ← 返回工具列表
+      返回工具列表
     </a>
   </div>
 </div>

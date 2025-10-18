@@ -14,7 +14,7 @@
       <!-- Logo -->
       <div class="flex items-center">
         <a href="/" class="text-xl font-bold text-white hover:text-gray-300 transition-colors">
-          DDNet 工具集
+          丘卡的 DDTools
         </a>
       </div>
 

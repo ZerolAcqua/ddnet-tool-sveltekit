@@ -18,7 +18,11 @@ export const PATCH = async ({ request, cookies, params }: RequestEvent) => {
     }
 
     const playerId = params.id;
-    const { isActive, notificationEnabled } = await request.json();
+    if (!playerId) {
+      return json({ success: false, message: '缺少玩家ID' }, { status: 400 });
+    }
+
+    const { isActive, notificationEnabled, playerName } = await request.json();
 
     // 验证玩家是否属于当前用户
     const player = await db.select().from(trackedPlayers)
@@ -33,10 +37,35 @@ export const PATCH = async ({ request, cookies, params }: RequestEvent) => {
       return json({ success: false, message: '玩家不存在或无权限' }, { status: 404 });
     }
 
+    // 如果更新玩家名，需要检查重复
+    if (playerName && typeof playerName === 'string') {
+      const trimmedName = playerName.trim();
+      if (trimmedName !== player[0].playerName) {
+        // 检查是否已存在同名玩家
+        const existingPlayer = await db.select().from(trackedPlayers)
+          .where(
+            and(
+              eq(trackedPlayers.playerName, trimmedName),
+              eq(trackedPlayers.userId, user.id)
+            )
+          ).limit(1);
+
+        if (existingPlayer.length > 0) {
+          return json({ success: false, message: '该玩家名已存在' }, { status: 400 });
+        }
+      }
+    }
+
     // 更新设置
     const updates: any = {};
     if (typeof isActive === 'boolean') updates.isActive = isActive;
     if (typeof notificationEnabled === 'boolean') updates.notificationEnabled = notificationEnabled;
+    if (playerName && typeof playerName === 'string') {
+      const trimmedName = playerName.trim();
+      if (trimmedName && trimmedName !== player[0].playerName) {
+        updates.playerName = trimmedName;
+      }
+    }
 
     if (Object.keys(updates).length === 0) {
       return json({ success: false, message: '没有有效的更新数据' }, { status: 400 });
@@ -79,6 +108,9 @@ export const DELETE = async ({ cookies, params }: RequestEvent) => {
     }
 
     const playerId = params.id;
+    if (!playerId) {
+      return json({ success: false, message: '缺少玩家ID' }, { status: 400 });
+    }
 
     // 验证并删除
     const result = await db.delete(trackedPlayers)
