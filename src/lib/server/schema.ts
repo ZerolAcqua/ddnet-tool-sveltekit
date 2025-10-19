@@ -25,7 +25,16 @@ export const trackedPlayers = sqliteTable('tracked_players', {
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+export const systemSettings = sqliteTable('system_settings', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  key: text('key').notNull().unique(),
+  value: text('value').notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedBy: text('updated_by').references(() => users.id),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type TrackedPlayer = typeof trackedPlayers.$inferSelect;
+export type SystemSetting = typeof systemSettings.$inferSelect;

@@ -2,10 +2,23 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { users } from '$lib/server/schema';
 import { hashPassword } from '$lib/server/auth';
+import { isRegistrationDisabled } from '$lib/server/settings';
 import { eq, count } from 'drizzle-orm';
 
 export const POST = async ({ request }: RequestEvent) => {
   try {
+    // 检查是否已有用户存在
+    const userCountResult = await db.select({ count: count() }).from(users);
+    const hasUsers = userCountResult[0].count > 0;
+    
+    // 检查注册是否被禁用（如果已有用户的话）
+    if (hasUsers && await isRegistrationDisabled()) {
+      return json({ 
+        success: false, 
+        message: '注册功能已被管理员关闭' 
+      }, { status: 403 });
+    }
+
     const { username, password } = await request.json();
 
     // 验证输入
@@ -24,7 +37,6 @@ export const POST = async ({ request }: RequestEvent) => {
     }
 
     // 检查是否为第一个用户（设为管理员）
-    const userCountResult = await db.select({ count: count() }).from(users);
     const isFirstUser = userCountResult[0].count === 0;
 
     // 创建用户

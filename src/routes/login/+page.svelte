@@ -1,7 +1,10 @@
 <script lang="ts">
+  import type { PageData } from './$types';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { browser } from '$app/environment';
+  
+  export let data: PageData;
   
   let isLoginMode = true;
   let formData = {
@@ -11,8 +14,22 @@
   };
   let message = '';
   let isLoading = false;
+  
+  // 使用预加载的数据，无需客户端检查
+  $: registrationDisabled = data.registrationDisabled;
+
+  // 检查注册是否被禁用并自动切换到登录模式
+  $: if (registrationDisabled && !isLoginMode) {
+    isLoginMode = true;
+    clearForm();
+  }
 
   function toggleMode() {
+    // 如果注册被禁用，不允许切换到注册模式
+    if (!isLoginMode && registrationDisabled) {
+      return;
+    }
+    
     isLoginMode = !isLoginMode;
     clearForm();
   }
@@ -221,19 +238,21 @@
     </form>
 
     <!-- 切换模式 -->
-    <div class="mt-6 text-center">
-      <p class="text-gray-400">
-        {isLoginMode ? '还没有账户？' : '已有账户？'}
-        <button
-          type="button"
-          on:click={toggleMode}
-          disabled={isLoading}
-          class="text-blue-400 hover:text-blue-300 font-medium ml-1 disabled:opacity-50 transition-colors"
-        >
-          {isLoginMode ? '注册' : '登录'}
-        </button>
-      </p>
-    </div>
+    {#if !registrationDisabled}
+      <div class="mt-6 text-center">
+        <p class="text-gray-400">
+          {isLoginMode ? '还没有账户？' : '已有账户？'}
+          <button
+            type="button"
+            on:click={toggleMode}
+            disabled={isLoading}
+            class="text-blue-400 hover:text-blue-300 font-medium ml-1 disabled:opacity-50 transition-colors"
+          >
+            {isLoginMode ? '注册' : '登录'}
+          </button>
+        </p>
+      </div>
+    {/if}
 
     <!-- 说明信息 -->
     <div class="mt-6 p-4 bg-gray-700/50 rounded-lg">
@@ -241,7 +260,7 @@
         <strong>说明：</strong> 
         {#if isLoginMode}
           使用你的用户名和密码登录。
-        {:else}
+        {:else if !registrationDisabled}
           第一个注册的用户将自动成为管理员。
         {/if}
       </p>
