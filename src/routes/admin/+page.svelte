@@ -6,10 +6,12 @@
   export const data = undefined;
 
   let users: any[] = [];
+  let settings: any = {};
   let isLoading = true;
+  let isUpdatingSettings = false;
 
   onMount(async () => {
-    await loadUsers();
+    await Promise.all([loadUsers(), loadSettings()]);
   });
 
   async function loadUsers() {
@@ -21,8 +23,54 @@
       }
     } catch (error) {
       console.error('加载用户列表失败:', error);
+    }
+  }
+
+  async function loadSettings() {
+    try {
+      const response = await fetch('/api/admin/settings');
+      if (response.ok) {
+        const data = await response.json();
+        settings = data.settings || {};
+      }
+    } catch (error) {
+      console.error('加载系统设置失败:', error);
     } finally {
       isLoading = false;
+    }
+  }
+
+  async function toggleRegistrationSetting() {
+    if (isUpdatingSettings) return;
+    
+    isUpdatingSettings = true;
+    try {
+      const newValue = !settings.registrationDisabled;
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          setting: 'registrationDisabled',
+          value: newValue
+        })
+      });
+
+      if (response.ok) {
+        settings.registrationDisabled = newValue;
+        // 显示成功消息（可选）
+        console.log('设置已更新');
+      } else {
+        const errorData = await response.json();
+        console.error('更新设置失败:', errorData.message);
+        alert('更新设置失败: ' + errorData.message);
+      }
+    } catch (error) {
+      console.error('更新设置失败:', error);
+      alert('更新设置失败，请重试');
+    } finally {
+      isUpdatingSettings = false;
     }
   }
 </script>
@@ -109,6 +157,63 @@
           <p class="text-gray-400">暂无用户数据</p>
         </div>
       {/if}
+    </div>
+
+    <!-- 系统设置 -->
+    <div class="card mt-6">
+      <h3 class="text-xl font-semibold mb-4">系统设置</h3>
+      <div class="space-y-4">
+        <!-- 注册设置 -->
+        <div class="border border-gray-600 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 class="font-medium text-white">用户注册</h4>
+              <p class="text-sm text-gray-400">控制新用户是否可以注册账号</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <!-- 状态显示 -->
+              {#if settings.registrationDisabled}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-900/50 text-red-300">
+                  已禁用
+                </span>
+              {:else}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-900/50 text-green-300">
+                  已启用
+                </span>
+              {/if}
+              
+              <!-- 开关按钮 -->
+              <button
+                on:click={toggleRegistrationSetting}
+                disabled={isUpdatingSettings}
+                aria-label={settings.registrationDisabled ? '启用用户注册' : '禁用用户注册'}
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 {
+                  settings.registrationDisabled 
+                    ? 'bg-gray-600' 
+                    : 'bg-blue-600'
+                }"
+              >
+                <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {
+                  settings.registrationDisabled 
+                    ? 'translate-x-1' 
+                    : 'translate-x-6'
+                }"></span>
+              </button>
+            </div>
+          </div>
+          
+          <div class="text-sm text-gray-400">
+            {#if settings.registrationDisabled}
+              新用户无法注册，但现有用户可以正常登录。
+            {:else}
+              新用户可以自由注册账号。
+            {/if}
+            {#if isUpdatingSettings}
+              <span class="text-yellow-400">正在更新...</span>
+            {/if}
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 系统信息 -->
