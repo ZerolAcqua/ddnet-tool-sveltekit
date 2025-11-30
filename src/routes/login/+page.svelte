@@ -14,9 +14,46 @@
   };
   let message = '';
   let isLoading = false;
+  let usernameError = '';
   
   // 使用预加载的数据，无需客户端检查
   $: registrationDisabled = data.registrationDisabled;
+
+  // 用户名验证函数
+  function validateUsernameInput(username: string): string {
+    if (!username.trim()) return '';
+    
+    const trimmedUsername = username.trim();
+    
+    if (trimmedUsername.length < 3) {
+      return '用户名至少需要3个字符';
+    }
+    
+    if (trimmedUsername.length > 20) {
+      return '用户名不能超过20个字符';
+    }
+    
+    if (trimmedUsername.includes(' ')) {
+      return '用户名不能包含空格';
+    }
+    
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
+      return '用户名只能包含字母、数字、下划线和连字符';
+    }
+    
+    if (!/^[a-zA-Z0-9]/.test(trimmedUsername)) {
+      return '用户名必须以字母或数字开头';
+    }
+    
+    return '';
+  }
+
+  // 实时验证用户名
+  $: if (!isLoginMode) {
+    usernameError = validateUsernameInput(formData.username);
+  } else {
+    usernameError = '';
+  }
 
   // 检查注册是否被禁用并自动切换到登录模式
   $: if (registrationDisabled && !isLoginMode) {
@@ -84,6 +121,13 @@
         // 注册逻辑
         if (!formData.username.trim() || !formData.password.trim()) {
           message = '请填写用户名和密码';
+          return;
+        }
+
+        // 客户端用户名验证
+        const usernameValidationError = validateUsernameInput(formData.username);
+        if (usernameValidationError) {
+          message = usernameValidationError;
           return;
         }
 
@@ -178,11 +222,14 @@
           type="text"
           bind:value={formData.username}
           on:keydown={handleKeydown}
-          placeholder={isLoginMode ? '输入用户名' : '选择一个用户名'}
-          class="input-field"
+          placeholder={isLoginMode ? '输入用户名' : '字母数字下划线连字符，3-20位'}
+          class="input-field {usernameError ? 'border-red-500' : ''}"
           disabled={isLoading}
           required
         />
+        {#if usernameError && !isLoginMode}
+          <p class="text-red-400 text-xs mt-1">{usernameError}</p>
+        {/if}
       </div>
 
       <!-- 密码 -->
@@ -229,8 +276,8 @@
       <div class="pt-2">
         <button
           type="submit"
-          disabled={isLoading}
-          class="btn-primary w-full py-3"
+          disabled={isLoading || (!isLoginMode && usernameError !== '')}
+          class="btn-primary w-full py-3 disabled:opacity-50"
         >
           {isLoading ? '处理中...' : (isLoginMode ? '登录' : '注册')}
         </button>
