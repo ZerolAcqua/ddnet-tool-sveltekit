@@ -23,10 +23,8 @@
       <div class="mb-16">
         <h1 class="text-7xl font-bold text-white mb-6 tracking-tight">丘卡的 DDTools</h1>
         <p class="text-3xl text-gray-300 font-light mb-8">个人 DDNet 工具箱</p>
-        <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto mb-12"></div>
         <p class="text-2xl text-gray-400 leading-relaxed max-w-3xl mx-auto">
           欢迎来到丘卡的 DDNet 工具箱！这里收集了一些我在 DDNet 游戏中用到的实用小工具。
-          界面简洁，功能实用，专注于解决实际需求。
         </p>
       </div>
       
