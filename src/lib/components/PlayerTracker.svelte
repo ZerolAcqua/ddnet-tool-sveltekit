@@ -40,7 +40,7 @@
 
   let countdown = Math.floor(REFRESH_INTERVAL / 1000); // 剩余秒数
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
-  let notificationsEnabled = true; // 通知开关
+  let notificationsEnabled = false; // 通知开关，默认为false，后续从localStorage读取
   let manualRefreshCooldown = 0; // 立即刷新冷却剩余时间
   let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -211,6 +211,11 @@
       notificationsEnabled = (permission === "granted");
     } else {
       notificationsEnabled = false;
+    }
+    
+    // 保存用户设置到 localStorage
+    if (browser) {
+      localStorage.setItem('ddnet-notifications-enabled', notificationsEnabled.toString());
     }
   }
 
@@ -443,6 +448,32 @@
       // 检查通知权限
       if ("Notification" in window) {
         notificationPermission = Notification.permission;
+      }
+
+      // 从 localStorage 读取用户的通知偏好设置
+      const savedNotificationSetting = localStorage.getItem('ddnet-notifications-enabled');
+      
+      if (savedNotificationSetting !== null) {
+        // 如果用户之前有设置过，使用用户的偏好
+        notificationsEnabled = savedNotificationSetting === 'true';
+        
+        // 但是如果权限不是已授予状态，强制关闭通知
+        if (notificationPermission !== "granted") {
+          notificationsEnabled = false;
+          // 更新localStorage以保持一致
+          localStorage.setItem('ddnet-notifications-enabled', 'false');
+        }
+      } else {
+        // 如果是第一次使用，根据权限状态设置默认值
+        if (notificationPermission === "granted") {
+          // 有权限时默认开启
+          notificationsEnabled = true;
+        } else {
+          // 没有权限或从未询问过时默认关闭
+          notificationsEnabled = false;
+        }
+        // 保存初始设置到localStorage
+        localStorage.setItem('ddnet-notifications-enabled', notificationsEnabled.toString());
       }
 
       await loadTrackedPlayers();
