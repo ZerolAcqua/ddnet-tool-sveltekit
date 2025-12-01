@@ -71,7 +71,7 @@
 </script>
 
 <div
-  class="p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center transition-all duration-200 {player.isOnline === false
+  class="p-3 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center transition-all duration-200 {player.isOnline === false
     ? 'bg-gray-700 opacity-60 text-gray-400 cursor-not-allowed' 
     : 'bg-gray-700 hover:bg-gray-600 cursor-pointer'} {copySuccess ? 'ring-2 ring-green-500' : ''}"
   on:click={copyServerAddress}
@@ -82,7 +82,7 @@
 >
   <div class="flex-1">
     <!-- 玩家名和状态 -->
-    <div class="flex items-center gap-2 mb-2">
+    <div class="flex items-center gap-2 mb-1">
       <p class="font-bold text-lg text-white">{player.player}</p>
       {#if player.isOnline !== false}
         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-900/50 text-green-300">
@@ -102,30 +102,16 @@
       {/if}
     </div>
 
-    <!-- 详细信息 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
-      <p class="text-gray-300">
-        <span class="text-gray-400">服务器：</span>{player.server || '未知'}
-      </p>
-      <p class="text-gray-300">
-        <span class="text-gray-400">地址：</span>{player.serverAddr || '未知'}
-      </p>
+    <!-- 详细信息 - 只显示地图 -->
+    <div class="text-sm">
       <p class="text-gray-300">
         <span class="text-gray-400">地图：</span>{player.map || '未知'}
       </p>
-      <p class="text-gray-300">
-        <span class="text-gray-400">挂机：</span>{player.afk === 'Yes' ? '是' : '否'}
-      </p>
-      {#if player.location}
-        <p class="text-gray-300">
-          <span class="text-gray-400">位置：</span>{player.location}
-        </p>
-      {/if}
     </div>
   </div>
   
   <!-- 右侧操作区域 -->
-  <div class="flex items-center gap-2 mt-3 sm:mt-0 sm:ml-4">
+  <div class="flex items-center gap-2 mt-2 sm:mt-0 sm:ml-4">
     {#if player.isOnline !== false && player.serverAddr && player.serverAddr !== "无"}
       <div class="text-xs {copySuccess ? 'text-green-400' : 'text-gray-400'}">
         <span>{copySuccess ? '复制成功' : '点击复制'}</span>

@@ -433,7 +433,7 @@
         <p class="text-gray-300">正在查询玩家状态...</p>
       </div>
     {:else if results.length > 0}
-      <div class="space-y-3">
+      <div class="space-y-2">
         {#each results as player, index (`${player.player}-${player.server || 'offline'}-${index}`)}
           <PlayerCard {player} />
         {/each}
