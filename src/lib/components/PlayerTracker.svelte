@@ -44,34 +44,161 @@
   let manualRefreshCooldown = 0; // 立即刷新冷却剩余时间
   let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
-  // 请求通知权限
+  // 请求通知权限 - Windows 兼容版本
   async function requestNotificationPermission() {
-    if (!browser || !("Notification" in window)) return "denied";
+    console.log('=== 权限请求调试 ===');
+    console.log('当前权限状态:', Notification?.permission);
+    console.log('浏览器支持:', 'Notification' in window);
     
-    const permission = await Notification.requestPermission();
-    notificationPermission = permission;
-    return permission;
+    if (!browser || !("Notification" in window)) {
+      console.log('❌ 浏览器不支持通知 API');
+      return "denied";
+    }
+    
+    // 如果已经授权，直接返回
+    if (Notification.permission === 'granted') {
+      console.log('✅ 权限已授予');
+      return 'granted';
+    }
+    
+    // 如果已被拒绝，提示用户手动启用
+    if (Notification.permission === 'denied') {
+      console.log('❌ 权限已被拒绝');
+      // Windows 用户可能需要在系统设置中启用
+      if (navigator.userAgent.includes('Windows')) {
+        alert('通知权限被拒绝。请按以下步骤启用：\n\n1. 打开 Windows 设置 → 系统 → 通知和操作\n2. 确保允许应用和网站发送通知\n3. 在 Chrome 设置中允许本网站发送通知');
+      } else {
+        alert('通知权限被拒绝。请在浏览器设置中手动启用本站点的通知权限。');
+      }
+      return 'denied';
+    }
+    
+    try {
+      console.log('📝 正在请求通知权限...');
+      const permission = await Notification.requestPermission();
+      console.log('权限请求结果:', permission);
+      
+      notificationPermission = permission;
+      
+      if (permission === 'granted') {
+        console.log('✅ 权限授予成功，发送测试通知');
+        
+        // 发送测试通知确认功能正常
+        try {
+          const testNotification = new Notification('DDNet 玩家追踪器', {
+            body: '通知功能已启用！🎉',
+            tag: 'test-notification',
+            requireInteraction: false,
+            silent: false
+          });
+          
+          testNotification.onclick = () => console.log('测试通知被点击');
+          testNotification.onerror = (e) => console.error('测试通知错误:', e);
+          testNotification.onshow = () => console.log('测试通知已显示');
+          
+          // 自动关闭测试通知
+          setTimeout(() => {
+            testNotification.close();
+          }, 3000);
+          
+        } catch (testError) {
+          console.error('❌ 测试通知发送失败:', testError);
+        }
+      } else {
+        console.log('❌ 用户拒绝了权限请求');
+      }
+      
+      return permission;
+    } catch (error) {
+      console.error('❌ 权限请求过程出错:', error);
+      notificationPermission = 'denied';
+      return 'denied';
+    }
   }
 
-  // 发送上线通知（合并多个玩家）
+  // 发送上线通知（合并多个玩家）- Windows 兼容版本
   function sendOnlineNotification(onlinePlayers: PlayerItem[]) {
-    if (!browser || notificationPermission !== "granted" || !notificationsEnabled || onlinePlayers.length === 0) return;
+    console.log('=== 通知调试信息 ===');
+    console.log('操作系统:', navigator.platform);
+    console.log('浏览器:', navigator.userAgent.includes('Windows') ? 'Windows Chrome' : 'Other');
+    console.log('通知API可用:', 'Notification' in window);
+    console.log('当前权限:', Notification?.permission);
+    console.log('组件权限状态:', notificationPermission);
+    console.log('通知开关:', notificationsEnabled);
+    console.log('玩家数量:', onlinePlayers.length);
     
-    if (onlinePlayers.length === 1) {
-      // 单个玩家上线
-      const player = onlinePlayers[0];
-      new Notification(`${player.player} 已上线！`, {
-        body: `服务器: ${player.server}\n地图: ${player.map}`,
-        icon: "/favicon.ico",
-        tag: "player-online-single",
-      });
-    } else {
-      // 多个玩家上线
-      const playerNames = onlinePlayers.map(p => p.player).join(", ");
-      new Notification(`${onlinePlayers.length} 名玩家已上线！`, {
-        body: `玩家: ${playerNames}`,
-        icon: "/favicon.ico",
-        tag: "player-online-multiple",
+    // 基础条件检查
+    if (!browser || !('Notification' in window)) {
+      console.log('❌ 浏览器不支持通知或非浏览器环境');
+      return;
+    }
+    
+    if (notificationPermission !== "granted") {
+      console.log('❌ 通知权限未授予:', notificationPermission);
+      return;
+    }
+    
+    if (!notificationsEnabled) {
+      console.log('❌ 通知功能未启用');
+      return;
+    }
+    
+    if (onlinePlayers.length === 0) {
+      console.log('❌ 没有玩家需要通知');
+      return;
+    }
+
+    console.log('✅ 所有条件满足，准备发送通知');
+
+    try {
+      if (onlinePlayers.length === 1) {
+        // 单个玩家上线
+        const player = onlinePlayers[0];
+        console.log('发送单个玩家通知:', player.player);
+        
+        const notification = new Notification(`${player.player} 已上线！`, {
+          body: `服务器: ${player.server}\n地图: ${player.map}`,
+          tag: "player-online-single",
+          requireInteraction: false,
+          silent: false,
+          // 暂时移除 icon 以避免 Windows 上的路径问题
+          // icon: "/favicon.ico"
+        });
+        
+        console.log('✅ 单个玩家通知创建成功');
+        
+        // 添加通知事件监听器进行调试
+        notification.onclick = () => console.log('通知被点击');
+        notification.onerror = (e) => console.error('通知错误:', e);
+        notification.onshow = () => console.log('通知已显示');
+        notification.onclose = () => console.log('通知已关闭');
+        
+      } else {
+        // 多个玩家上线
+        const playerNames = onlinePlayers.map(p => p.player).join(", ");
+        console.log('发送多个玩家通知:', playerNames);
+        
+        const notification = new Notification(`${onlinePlayers.length} 名玩家已上线！`, {
+          body: `玩家: ${playerNames}`,
+          tag: "player-online-multiple", 
+          requireInteraction: false,
+          silent: false,
+          // icon: "/favicon.ico"
+        });
+        
+        console.log('✅ 多个玩家通知创建成功');
+        
+        notification.onclick = () => console.log('通知被点击');
+        notification.onerror = (e) => console.error('通知错误:', e);
+        notification.onshow = () => console.log('通知已显示');
+        notification.onclose = () => console.log('通知已关闭');
+      }
+    } catch (error) {
+      console.error('❌ 创建通知失败:', error);
+      console.error('错误详情:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
     }
   }
@@ -379,15 +506,17 @@
 
     <!-- 操作区域 -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-gray-700/50">
-      <label class="flex items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          checked={notificationsEnabled}
-          on:change={toggleNotifications}
-          class="checkbox w-4 h-4"
-        />
-        <span class="text-gray-300">启用上线通知提醒</span>
-      </label>
+      <div class="flex flex-col gap-2">
+        <label class="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={notificationsEnabled}
+            on:change={toggleNotifications}
+            class="checkbox w-4 h-4"
+          />
+          <span class="text-gray-300">启用上线通知提醒</span>
+        </label>
+      </div>
 
       <button
         class="btn-primary"
