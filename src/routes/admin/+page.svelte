@@ -275,31 +275,6 @@
       </div>
     </div>
 
-    <!-- 系统信息 -->
-    <div class="card mt-6">
-      <h3 class="text-xl font-semibold mb-4">系统信息</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        <div>
-          <h4 class="font-medium text-white mb-2">技术栈</h4>
-          <ul class="space-y-1 text-gray-300">
-            <li>• SvelteKit</li>
-            <li>• TypeScript</li>
-            <li>• TailwindCSS</li>
-            <li>• SQLite + Drizzle ORM</li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-medium text-white mb-2">功能模块</h4>
-          <ul class="space-y-1 text-gray-300">
-            <li>• 用户认证系统</li>
-            <li>• 玩家追踪器</li>
-            <li>• 管理面板</li>
-            <li>• 实时通知</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
     <!-- 返回首页 -->
     <div class="mt-8 text-center">
       <a href="/" class="text-gray-400 hover:text-white transition-colors">

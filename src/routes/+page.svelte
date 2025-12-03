@@ -27,10 +27,6 @@
           欢迎来到丘卡的 DDNet 工具箱！这里收集了一些我在 DDNet 游戏中用到的实用小工具。
         </p>
       </div>
-      
-      <div class="text-lg text-gray-500">
-        通过导航栏访问工具
-      </div>
     </div>
   </div>
 

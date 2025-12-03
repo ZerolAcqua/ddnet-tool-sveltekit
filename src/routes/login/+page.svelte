@@ -301,18 +301,6 @@
       </div>
     {/if}
 
-    <!-- 说明信息 -->
-    <div class="mt-6 p-4 bg-gray-700/50 rounded-lg">
-      <p class="text-gray-400 text-sm">
-        <strong>说明：</strong> 
-        {#if isLoginMode}
-          使用你的用户名和密码登录。
-        {:else if !registrationDisabled}
-          第一个注册的用户将自动成为管理员。
-        {/if}
-      </p>
-    </div>
-
     <!-- 返回首页链接 -->
     <div class="mt-4 text-center">
       <a href="/" class="text-gray-500 hover:text-gray-300 text-sm transition-colors">
