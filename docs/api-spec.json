@@ -1,0 +1,573 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DDNet 工具集 API",
+    "description": "DDNet 玩家追踪和管理工具的 API 接口",
+    "version": "1.0.0",
+    "contact": {
+      "name": "DDNet Tool API",
+      "url": "https://github.com/ZerolAcqua/ddnet-tool-sveltekit"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5175/api",
+      "description": "开发环境"
+    },
+    {
+      "url": "https://your-domain.com/api",
+      "description": "生产环境"
+    }
+  ],
+  "tags": [
+    {
+      "name": "认证",
+      "description": "用户认证相关接口"
+    },
+    {
+      "name": "玩家追踪",
+      "description": "DDNet 玩家追踪功能"
+    },
+    {
+      "name": "管理员",
+      "description": "管理员功能接口"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "用户注册",
+        "description": "创建新用户账户",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "用户名（3-20字符，字母数字下划线连字符）",
+                    "minLength": 3,
+                    "maxLength": 20
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "密码",
+                    "minLength": 6
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误"
+          },
+          "409": {
+            "description": "用户名已存在"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "用户登录",
+        "description": "用户账户登录",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "用户名"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "密码"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "会话Cookie",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "用户名或密码错误"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "用户登出",
+        "description": "退出用户会话",
+        "responses": {
+          "200": {
+            "description": "登出成功"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["认证"],
+        "summary": "获取当前用户信息",
+        "description": "获取当前登录用户的信息",
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "用户信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未登录"
+          }
+        }
+      }
+    },
+    "/tools/player-tracker": {
+      "get": {
+        "tags": ["玩家追踪"],
+        "summary": "获取追踪玩家列表",
+        "description": "获取当前用户的所有追踪玩家",
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "追踪玩家列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "players": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TrackedPlayer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未登录"
+          }
+        }
+      },
+      "post": {
+        "tags": ["玩家追踪"],
+        "summary": "添加追踪玩家",
+        "description": "添加新的玩家到追踪列表",
+        "security": [{"cookieAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["playerName"],
+                "properties": {
+                  "playerName": {
+                    "type": "string",
+                    "description": "要追踪的玩家名称"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "添加成功"
+          },
+          "400": {
+            "description": "参数错误"
+          },
+          "409": {
+            "description": "玩家已存在"
+          }
+        }
+      }
+    },
+    "/tools/player-tracker/{id}": {
+      "patch": {
+        "tags": ["玩家追踪"],
+        "summary": "更新追踪玩家",
+        "description": "更新追踪玩家的设置",
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "追踪玩家ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "isActive": {
+                    "type": "boolean",
+                    "description": "是否激活追踪"
+                  },
+                  "notificationEnabled": {
+                    "type": "boolean",
+                    "description": "是否开启通知"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功"
+          },
+          "404": {
+            "description": "玩家不存在"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["玩家追踪"],
+        "summary": "删除追踪玩家",
+        "description": "从追踪列表中删除玩家",
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "追踪玩家ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          },
+          "404": {
+            "description": "玩家不存在"
+          }
+        }
+      }
+    },
+    "/tools/player-tracker/search": {
+      "post": {
+        "tags": ["玩家追踪"],
+        "summary": "查询玩家状态",
+        "description": "查询指定玩家在 DDNet 服务器中的状态",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["playerNames"],
+                "properties": {
+                  "playerNames": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "要查询的玩家名称列表"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "players": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PlayerItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "DDNet 服务不可用"
+          }
+        }
+      }
+    },
+    "/admin/settings": {
+      "get": {
+        "tags": ["管理员"],
+        "summary": "获取系统设置",
+        "description": "获取系统配置信息",
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "设置信息"
+          },
+          "403": {
+            "description": "权限不足"
+          }
+        }
+      },
+      "post": {
+        "tags": ["管理员"],
+        "summary": "更新系统设置",
+        "description": "更新系统配置",
+        "security": [{"cookieAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "disableRegistration": {
+                    "type": "boolean",
+                    "description": "是否禁用注册"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "设置更新成功"
+          },
+          "403": {
+            "description": "权限不足"
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": ["管理员"],
+        "summary": "获取用户列表",
+        "description": "获取所有用户的信息",
+        "security": [{"cookieAuth": []}],
+        "responses": {
+          "200": {
+            "description": "用户列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足"
+          }
+        }
+      }
+    },
+    "/admin/users/{id}": {
+      "delete": {
+        "tags": ["管理员"],
+        "summary": "删除用户",
+        "description": "删除指定用户",
+        "security": [{"cookieAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "用户ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          },
+          "403": {
+            "description": "权限不足"
+          },
+          "404": {
+            "description": "用户不存在"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
+      }
+    },
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "admin"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TrackedPlayer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "playerName": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "notificationEnabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PlayerItem": {
+        "type": "object",
+        "properties": {
+          "player": {
+            "type": "string"
+          },
+          "server": {
+            "type": "string"
+          },
+          "serverAddr": {
+            "type": "string"
+          },
+          "map": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "skin": {
+            "type": "string"
+          },
+          "team": {
+            "type": "number"
+          },
+          "afk": {
+            "type": "string"
+          },
+          "isOnline": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
