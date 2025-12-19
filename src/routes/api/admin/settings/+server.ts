@@ -1,12 +1,11 @@
-import { json, type RequestEvent } from '@sveltejs/kit';
-import { verifySession } from '$lib/server/auth';
+import { json } from '@sveltejs/kit';
+import { optionalAuth, withAdminAuth } from '$lib/server/middleware';
 import { isRegistrationDisabled, toggleRegistration } from '$lib/server/settings';
 
 // 获取系统设置
-export const GET = async ({ cookies }: RequestEvent) => {
+export const GET = async (event) => {
   try {
-    const sessionToken = cookies.get('session');
-    const user = sessionToken ? await verifySession(sessionToken) : null;
+    const user = await optionalAuth(event);
     
     // 所有用户都可以获取基本设置（如注册状态），但管理员可以获取详细信息
     if (user && user.isAdmin) {
@@ -41,18 +40,8 @@ export const GET = async ({ cookies }: RequestEvent) => {
 };
 
 // 更新系统设置
-export const PUT = async ({ request, cookies }: RequestEvent) => {
+export const PUT = withAdminAuth(async ({ request, user }) => {
   try {
-    const sessionToken = cookies.get('session');
-    if (!sessionToken) {
-      return json({ success: false, message: '请先登录' }, { status: 401 });
-    }
-
-    const user = await verifySession(sessionToken);
-    if (!user || !user.isAdmin) {
-      return json({ success: false, message: '权限不足' }, { status: 403 });
-    }
-
     const { setting, value } = await request.json();
 
     switch (setting) {
@@ -72,4 +61,4 @@ export const PUT = async ({ request, cookies }: RequestEvent) => {
     console.error('更新系统设置失败:', error);
     return json({ success: false, message: '更新失败' }, { status: 500 });
   }
-};
+});

@@ -1,20 +1,10 @@
-import { json, type RequestEvent } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { users } from '$lib/server/schema';
-import { verifySession } from '$lib/server/auth';
+import { withAdminAuth } from '$lib/server/middleware';
 
-export const GET = async ({ cookies }: RequestEvent) => {
+export const GET = withAdminAuth(async () => {
   try {
-    const sessionToken = cookies.get('session');
-    if (!sessionToken) {
-      return json({ success: false, message: '请先登录' }, { status: 401 });
-    }
-
-    const user = await verifySession(sessionToken);
-    if (!user || !user.isAdmin) {
-      return json({ success: false, message: '权限不足' }, { status: 403 });
-    }
-
     const allUsers = await db.select({
       id: users.id,
       username: users.username,
@@ -32,4 +22,4 @@ export const GET = async ({ cookies }: RequestEvent) => {
     console.error('获取用户列表失败:', error);
     return json({ success: false, message: '获取用户列表失败，请稍后重试' }, { status: 500 });
   }
-};
+});

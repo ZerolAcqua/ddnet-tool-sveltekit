@@ -1,22 +1,12 @@
-import { json, type RequestEvent } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { trackedPlayers, users } from '$lib/server/schema';
-import { verifySession } from '$lib/server/auth';
+import { trackedPlayers } from '$lib/server/schema';
+import { withAuth } from '$lib/server/middleware';
 import { eq, and } from 'drizzle-orm';
 
 // 获取用户的追踪玩家列表
-export const GET = async ({ cookies }: RequestEvent) => {
+export const GET = withAuth(async ({ user }) => {
   try {
-    const sessionToken = cookies.get('session');
-    if (!sessionToken) {
-      return json({ success: false, message: '请先登录' }, { status: 401 });
-    }
-
-    const user = await verifySession(sessionToken);
-    if (!user) {
-      return json({ success: false, message: '会话已过期，请重新登录' }, { status: 401 });
-    }
-
     const players = await db.select().from(trackedPlayers)
       .where(eq(trackedPlayers.userId, user.id))
       .orderBy(trackedPlayers.createdAt);
@@ -36,21 +26,11 @@ export const GET = async ({ cookies }: RequestEvent) => {
     console.error('获取追踪玩家列表失败:', error);
     return json({ success: false, message: '获取列表失败，请稍后重试' }, { status: 500 });
   }
-};
+});
 
 // 添加追踪玩家
-export const POST = async ({ request, cookies }: RequestEvent) => {
+export const POST = withAuth(async ({ request, user }) => {
   try {
-    const sessionToken = cookies.get('session');
-    if (!sessionToken) {
-      return json({ success: false, message: '请先登录' }, { status: 401 });
-    }
-
-    const user = await verifySession(sessionToken);
-    if (!user) {
-      return json({ success: false, message: '会话已过期，请重新登录' }, { status: 401 });
-    }
-
     const { playerName } = await request.json();
 
     if (!playerName?.trim()) {
@@ -92,21 +72,11 @@ export const POST = async ({ request, cookies }: RequestEvent) => {
     console.error('添加追踪玩家失败:', error);
     return json({ success: false, message: '添加失败，请稍后重试' }, { status: 500 });
   }
-};
+});
 
 // 清空所有追踪玩家
-export const DELETE = async ({ cookies }: RequestEvent) => {
+export const DELETE = withAuth(async ({ user }) => {
   try {
-    const sessionToken = cookies.get('session');
-    if (!sessionToken) {
-      return json({ success: false, message: '请先登录' }, { status: 401 });
-    }
-
-    const user = await verifySession(sessionToken);
-    if (!user) {
-      return json({ success: false, message: '会话已过期，请重新登录' }, { status: 401 });
-    }
-
     // 删除用户的所有追踪玩家
     const result = await db.delete(trackedPlayers)
       .where(eq(trackedPlayers.userId, user.id))
@@ -121,4 +91,4 @@ export const DELETE = async ({ cookies }: RequestEvent) => {
     console.error('清空追踪玩家列表失败:', error);
     return json({ success: false, message: '清空失败，请稍后重试' }, { status: 500 });
   }
-};
+});

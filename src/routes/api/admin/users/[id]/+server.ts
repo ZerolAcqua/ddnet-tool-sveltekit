@@ -1,22 +1,12 @@
-import { json, type RequestEvent } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { users } from '$lib/server/schema';
-import { verifySession } from '$lib/server/auth';
+import { withAdminAuth } from '$lib/server/middleware';
 import { eq } from 'drizzle-orm';
 
 // 删除用户
-export const DELETE = async ({ request, cookies, params }: RequestEvent) => {
+export const DELETE = withAdminAuth(async ({ request, user: currentUser, params }) => {
   try {
-    const sessionToken = cookies.get('session');
-    if (!sessionToken) {
-      return json({ success: false, message: '请先登录' }, { status: 401 });
-    }
-
-    const currentUser = await verifySession(sessionToken);
-    if (!currentUser || !currentUser.isAdmin) {
-      return json({ success: false, message: '权限不足' }, { status: 403 });
-    }
-
     const targetUserId = params.id;
     if (!targetUserId) {
       return json({ success: false, message: '缺少用户ID' }, { status: 400 });
@@ -52,4 +42,4 @@ export const DELETE = async ({ request, cookies, params }: RequestEvent) => {
     console.error('删除用户失败:', error);
     return json({ success: false, message: '删除用户失败，请稍后重试' }, { status: 500 });
   }
-};
+});

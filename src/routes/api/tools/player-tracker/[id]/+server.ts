@@ -1,22 +1,12 @@
-import { json, type RequestEvent } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { trackedPlayers } from '$lib/server/schema';
-import { verifySession } from '$lib/server/auth';
+import { withAuth } from '$lib/server/middleware';
 import { eq, and } from 'drizzle-orm';
 
 // 更新追踪玩家设置
-export const PATCH = async ({ request, cookies, params }: RequestEvent) => {
+export const PATCH = withAuth(async ({ request, user, params }) => {
   try {
-    const sessionToken = cookies.get('session');
-    if (!sessionToken) {
-      return json({ success: false, message: '请先登录' }, { status: 401 });
-    }
-
-    const user = await verifySession(sessionToken);
-    if (!user) {
-      return json({ success: false, message: '会话已过期，请重新登录' }, { status: 401 });
-    }
-
     const playerId = params.id;
     if (!playerId) {
       return json({ success: false, message: '缺少玩家ID' }, { status: 400 });
@@ -92,21 +82,11 @@ export const PATCH = async ({ request, cookies, params }: RequestEvent) => {
     console.error('更新追踪玩家失败:', error);
     return json({ success: false, message: '更新失败，请稍后重试' }, { status: 500 });
   }
-};
+});
 
 // 删除追踪玩家
-export const DELETE = async ({ cookies, params }: RequestEvent) => {
+export const DELETE = withAuth(async ({ user, params }) => {
   try {
-    const sessionToken = cookies.get('session');
-    if (!sessionToken) {
-      return json({ success: false, message: '请先登录' }, { status: 401 });
-    }
-
-    const user = await verifySession(sessionToken);
-    if (!user) {
-      return json({ success: false, message: '会话已过期，请重新登录' }, { status: 401 });
-    }
-
     const playerId = params.id;
     if (!playerId) {
       return json({ success: false, message: '缺少玩家ID' }, { status: 400 });
@@ -134,4 +114,4 @@ export const DELETE = async ({ cookies, params }: RequestEvent) => {
     console.error('删除追踪玩家失败:', error);
     return json({ success: false, message: '删除失败，请稍后重试' }, { status: 500 });
   }
-};
+});
