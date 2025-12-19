@@ -14,21 +14,23 @@
       name: '玩家追踪器',
       description: '实时追踪 DDNet 玩家在线状态，支持上线通知和服务器信息查看',
       available: true,
-      requireAuth: true
+      requireAuth: true,
+      hideNotAuth: false
     },
     {
       id: 'server-browser',
       name: '服务器浏览器',
       description: '浏览所有 DDNet 服务器状态和玩家信息',
       available: false,
-      requireAuth: false
+      requireAuth: true,
+      hideNotAuth: true
     },
     {
-      id: 'map-tracker',
-      name: '地图进度',
-      description: '查看和追踪你的地图完成进度',
+      id: 'map-guide',
+      name: '地图攻略',
+      description: '提供 DDNet 地图的视频教程列表',
       available: false,
-      requireAuth: true
+      requireAuth: false,
     }
   ];
 </script>
@@ -47,7 +49,7 @@
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {#each tools as tool}
-      {#if !tool.requireAuth || $authState.isAuthenticated}
+      {#if !tool.requireAuth || !(tool.hideNotAuth && !$authState.isAuthenticated)}
         <div class="card flex flex-col h-full">
           <!-- 标题和标签行 -->
           <div class="flex items-start justify-between mb-3">
