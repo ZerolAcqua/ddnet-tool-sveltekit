@@ -135,11 +135,15 @@
         // 使用防抖更新列表 - 添加玩家不需要立即搜索
         debounceUpdate(false);
       } else {
-        message = result.message;
+        if (response.status === 401) {
+          message = '登录已过期，请重新登录';
+        } else {
+          message = result.message || '添加玩家失败';
+        }
       }
     } catch (error) {
       console.error('添加玩家失败:', error);
-      message = '添加失败，请稍后重试';
+      message = '网络错误，添加失败';
     } finally {
       isLoading = false;
     }
@@ -159,10 +163,16 @@
         return true;
       } else {
         console.error('删除玩家失败:', result.message);
+        if (response.status === 401) {
+          message = '登录已过期，请重新登录';
+        } else {
+          message = result.message || '删除玩家失败';
+        }
         return false;
       }
     } catch (error) {
       console.error('删除玩家失败:', error);
+      message = '网络错误，删除失败';
       return false;
     }
   }
@@ -185,10 +195,16 @@
         return true;
       } else {
         console.error('更新玩家设置失败:', result.message);
+        if (response.status === 401) {
+          message = '登录已过期，请重新登录';
+        } else {
+          message = result.message || '更新玩家设置失败';
+        }
         return false;
       }
     } catch (error) {
       console.error('更新玩家设置失败:', error);
+      message = '网络错误，更新失败';
       return false;
     }
   }
@@ -317,11 +333,18 @@
         showClearConfirm = false;
         debounceUpdate();
       } else {
-        message = result.message;
+        if (response.status === 401) {
+          message = '登录已过期，请重新登录';
+          showClearConfirm = false; // 关闭确认对话框
+        } else {
+          message = result.message;
+          showClearConfirm = false; // 其他错误也关闭对话框
+        }
       }
     } catch (error) {
       console.error('清空玩家列表失败:', error);
-      message = '清空失败，请稍后重试';
+      message = '网络错误，清空失败';
+      showClearConfirm = false; // 网络错误也关闭对话框
     } finally {
       isLoading = false;
     }
@@ -390,6 +413,7 @@
     } catch (error) {
       console.error('批量操作失败:', error);
       message = '批量操作失败，请稍后重试';
+      showBulkConfirm = false; // 确保在错误时关闭确认对话框
     } finally {
       isBulkLoading = false;
     }

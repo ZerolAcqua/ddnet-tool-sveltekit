@@ -31,6 +31,7 @@
   let trackedPlayers: TrackedPlayer[] = [];
   let results: PlayerItem[] = [];
   let loading: boolean = false;
+  let error: string = ''; // 错误信息
   let previousResults: PlayerItem[] = []; // 用于比较状态变化
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lastManualRefresh = 0;
@@ -43,6 +44,18 @@
   let notificationsEnabled = false; // 通知开关，默认为false，后续从localStorage读取
   let manualRefreshCooldown = 0; // 立即刷新冷却剩余时间
   let cooldownTimer: ReturnType<typeof setInterval> | null = null;
+
+  // 清除错误信息
+  function clearError() {
+    error = '';
+  }
+
+  // 自动清除错误信息
+  $: if (error && browser) {
+    setTimeout(() => {
+      error = '';
+    }, 8000); // 8秒后自动清除
+  }
 
   // 请求通知权限 - Windows 兼容版本
   async function requestNotificationPermission() {
@@ -261,17 +274,26 @@
     }
   }
 
-  // 加载追踪玩家列表
+  // 加载用户的追踪玩家列表
   async function loadTrackedPlayers() {
     try {
+      clearError(); // 清除之前的错误
       const response = await fetch('/api/tools/player-tracker');
       const data = await response.json();
       
       if (data.success) {
         trackedPlayers = data.players || [];
+      } else {
+        // API 返回了错误
+        if (response.status === 401) {
+          error = '请先登录以使用玩家追踪功能';
+        } else {
+          error = data.message || '加载追踪玩家列表失败';
+        }
       }
-    } catch (error) {
-      console.error('加载追踪玩家列表失败:', error);
+    } catch (err) {
+      console.error('加载追踪玩家列表失败:', err);
+      error = '网络错误，请检查网络连接或稍后重试';
     }
   }
 
@@ -364,9 +386,17 @@
 
         detectPlayerStatusChanges(allResults);
         results = allResults;
+      } else {
+        // API 返回了错误
+        if (response.status === 401) {
+          error = '登录已过期，请重新登录';
+        } else {
+          error = data.message || '查询玩家状态失败';
+        }
       }
-    } catch (error) {
-      console.error('查询玩家失败:', error);
+    } catch (err) {
+      console.error('查询玩家失败:', err);
+      error = '网络错误，请检查网络连接或稍后重试';
     } finally {
       loading = false;
     }
