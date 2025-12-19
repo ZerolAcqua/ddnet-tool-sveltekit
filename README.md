@@ -1,38 +1,50 @@
-# sv
+# 丘卡的 DDTools
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+一个基于 SvelteKit 构建的 DDNet 工具集合网站
 
-## Creating a project
+## 功能特色
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **用户认证系统** - JWT 身份验证与会话管理
+- **玩家追踪器** - 追踪 DDNet 玩家数据和统计信息
+- **管理面板** - 系统管理和配置界面
+- **响应式设计** - 适配桌面和移动设备
 
-```sh
-# create a new project in the current directory
-npx sv create
+## 技术栈
 
-# create a new project in my-app
-npx sv create my-app
+- **前端**: SvelteKit 2.x + TypeScript + TailwindCSS
+- **数据库**: SQLite + Drizzle ORM
+- **认证**: JWT + bcrypt
+- **部署**: Node.js/Vercel/Netlify
+
+## 快速开始
+
+### 安装依赖
+
+```bash
+npm install
 ```
 
-## Developing
+### 数据库设置
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+```bash
+# 生成数据库迁移
+npm run db:generate
 
-```sh
+# 执行数据库迁移
+npm run db:migrate
+```
+
+### 开发环境
+
+```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+访问 `http://localhost:5173` 查看应用
 
-To create a production version of your app:
+### 生产构建
 
-```sh
+```bash
 npm run build
+npm run start
 ```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
