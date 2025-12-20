@@ -3,9 +3,6 @@
   import Navigation from "$lib/components/Navigation.svelte";
   import { tools, getToolStats } from "$lib/config/tools";
 
-  // 页面数据由 +page.ts 加载函数提供
-  export const data = undefined;
-
   let settings: any = {};
   let isLoading = true;
   let isUpdatingSettings = false;
