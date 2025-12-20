@@ -1,0 +1,20 @@
+# DDNet 地图数据同步 Cron 任务配置 (Node.js 版本)
+# 每天凌晨2点执行一次同步检查
+0 2 * * * cd /path/to/ddnet-tool-sveltekit && npm run sync:once >> /var/log/ddnet-sync.log 2>&1
+
+# 每6小时检查一次同步状态（可选）
+# 0 */6 * * * cd /path/to/ddnet-tool-sveltekit && npm run sync:once >> /var/log/ddnet-sync.log 2>&1
+
+# 使用说明：
+# 1. 将此文件保存为 ddnet-sync-cron
+# 2. 替换 /path/to/ddnet-tool-sveltekit 为实际项目路径
+# 3. 确保日志目录存在且有写权限：sudo mkdir -p /var/log && sudo touch /var/log/ddnet-sync.log
+# 4. 安装 cron 任务：crontab ddnet-sync-cron
+# 5. 查看已安装的任务：crontab -l
+# 6. 查看日志：tail -f /var/log/ddnet-sync.log
+
+# 或者，启动持久的 Node.js 调度器（推荐用于生产环境）：
+# 使用 PM2 或其他进程管理器运行：pm2 start "npm run sync:start" --name "ddnet-sync"
+
+# 环境变量设置（如果需要）
+# SYNC_SCHEDULE=0 2 * * *  # 自定义调度时间

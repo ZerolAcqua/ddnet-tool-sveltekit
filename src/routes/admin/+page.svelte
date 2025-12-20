@@ -6,13 +6,9 @@
   // 页面数据由 +page.ts 加载函数提供
   export const data = undefined;
 
-  let users: any[] = [];
   let settings: any = {};
   let isLoading = true;
   let isUpdatingSettings = false;
-  let showDeleteModal = false;
-  let userToDelete: any = null;
-  let deleteLoading = false;
   let systemStatus = 'checking'; // checking, healthy, error
   let statusMessage = '检查中...';
 
@@ -20,20 +16,8 @@
   $: toolStats = getToolStats();
 
   onMount(async () => {
-    await Promise.all([loadUsers(), loadSettings(), checkSystemHealth()]);
+    await Promise.all([loadSettings(), checkSystemHealth()]);
   });
-
-  async function loadUsers() {
-    try {
-      const response = await fetch('/api/admin/users');
-      if (response.ok) {
-        const data = await response.json();
-        users = data.users || [];
-      }
-    } catch (error) {
-      console.error('加载用户列表失败:', error);
-    }
-  }
 
   async function loadSettings() {
     try {
@@ -134,45 +118,6 @@
       isUpdatingSettings = false;
     }
   }
-
-  function showDeleteUserModal(user: any) {
-    userToDelete = user;
-    showDeleteModal = true;
-  }
-
-  function cancelDelete() {
-    showDeleteModal = false;
-    userToDelete = null;
-  }
-
-  async function confirmDelete() {
-    if (!userToDelete || deleteLoading) return;
-
-    deleteLoading = true;
-    try {
-      const response = await fetch(`/api/admin/users/${userToDelete.id}`, {
-        method: 'DELETE'
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // 从用户列表中移除已删除的用户
-        users = users.filter(u => u.id !== userToDelete.id);
-        console.log('用户删除成功:', result.message);
-        alert(result.message);
-      } else {
-        console.error('删除用户失败:', result.message);
-        alert('删除失败: ' + result.message);
-      }
-    } catch (error) {
-      console.error('删除用户失败:', error);
-      alert('删除失败，请重试');
-    } finally {
-      deleteLoading = false;
-      cancelDelete();
-    }
-  }
 </script>
 
 <svelte:head>
@@ -199,12 +144,7 @@
     </div>
 
     <!-- 统计信息 -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <div class="card text-center">
-        <h3 class="text-xl font-semibold mb-1">用户总数</h3>
-        <p class="text-gray-400">{users.length} 个用户</p>
-      </div>
-      
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div class="card text-center">
         <h3 class="text-xl font-semibold mb-1">工具数量</h3>
         <p class="text-gray-400">{toolStats.available} 个工具可用</p>
@@ -227,64 +167,32 @@
       </div>
     </div>
 
-    <!-- 用户列表 -->
-    <div class="card">
-      <h3 class="text-xl font-semibold mb-4">用户管理</h3>
-      {#if users.length > 0}
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-gray-600">
-                <th class="text-left py-3 px-4">用户名</th>
-                <th class="text-left py-3 px-4">权限</th>
-                <th class="text-left py-3 px-4">注册时间</th>
-                <th class="text-center py-3 px-4 w-24">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each users as user}
-                <tr class="border-b border-gray-700 hover:bg-gray-700/50">
-                  <td class="py-3 px-4 font-medium">{user.username}</td>
-                  <td class="py-3 px-4">
-                    {#if user.isAdmin}
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-900/50 text-red-300">
-                        管理员
-                      </span>
-                    {:else}
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-600 text-gray-400">
-                        普通用户
-                      </span>
-                    {/if}
-                  </td>
-                  <td class="py-3 px-4 text-gray-400">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </td>
-                  <td class="py-3 px-4 text-center">
-                    {#if !user.isAdmin}
-                      <button
-                        on:click={() => showDeleteUserModal(user)}
-                        class="text-red-400 hover:text-red-300 transition-colors p-1"
-                        title="删除用户"
-                        disabled={deleteLoading}
-                      >
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                      </button>
-                    {:else}
-                      <span class="text-gray-500 text-xs">管理员</span>
-                    {/if}
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
-      {:else}
-        <div class="text-center py-8">
-          <p class="text-gray-400">暂无用户数据</p>
-        </div>
-      {/if}
+    <!-- 管理功能 -->
+    <div class="card mt-6">
+      <h3 class="text-xl font-semibold mb-4">管理功能</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- 数据同步 -->
+        <a 
+          href="/admin/sync" 
+          class="block p-4 border border-gray-600 rounded-lg hover:border-gray-500 hover:bg-gray-700/20 transition-colors"
+        >
+          <h4 class="font-medium text-white mb-2">数据同步</h4>
+          <p class="text-sm text-gray-400">
+            监控和管理 DDNet 地图数据同步状态
+          </p>
+        </a>
+        
+        <!-- 用户管理 -->
+        <a 
+          href="/admin/users" 
+          class="block p-4 border border-gray-600 rounded-lg hover:border-gray-500 hover:bg-gray-700/20 transition-colors"
+        >
+          <h4 class="font-medium text-white mb-2">用户管理</h4>
+          <p class="text-sm text-gray-400">
+            管理用户账户和权限设置
+          </p>
+        </a>
+      </div>
     </div>
 
     <!-- 系统设置 -->
@@ -352,52 +260,3 @@
     </div>
   {/if}
 </div>
-
-<!-- 删除用户确认模态框 -->
-{#if showDeleteModal && userToDelete}
-  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md border border-gray-700">
-      <h3 class="text-lg font-semibold text-white mb-4">确认删除用户</h3>
-      
-      <div class="mb-6">
-        <p class="text-gray-300 mb-2">您确定要删除以下用户吗？</p>
-        <div class="bg-gray-700/50 rounded-lg p-3">
-          <div class="flex items-center space-x-3">
-            <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-              <span class="text-sm font-medium text-white">
-                {userToDelete.username.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <p class="font-medium text-white">{userToDelete.username}</p>
-              <p class="text-sm text-gray-400">
-                {userToDelete.isAdmin ? '管理员' : '普通用户'} • 
-                注册于 {new Date(userToDelete.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-        </div>
-        <p class="text-red-400 text-sm mt-3">
-          <strong>警告：</strong>此操作不可撤销，将删除该用户的所有数据。
-        </p>
-      </div>
-
-      <div class="flex space-x-3">
-        <button
-          on:click={cancelDelete}
-          disabled={deleteLoading}
-          class="flex-1 btn-secondary"
-        >
-          取消
-        </button>
-        <button
-          on:click={confirmDelete}
-          disabled={deleteLoading}
-          class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {deleteLoading ? '删除中...' : '确认删除'}
-        </button>
-      </div>
-    </div>
-  </div>
-{/if}

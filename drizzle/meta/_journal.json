@@ -15,6 +15,13 @@
       "when": 1760878316111,
       "tag": "0001_awesome_the_spike",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1766226481242,
+      "tag": "0002_overjoyed_phantom_reporter",
+      "breakpoints": true
     }
   ]
 }

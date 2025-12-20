@@ -11,6 +11,9 @@ node_modules/
 /build
 /dist
 
+# Cache
+/cache
+
 # OS
 .DS_Store
 .AppleDouble

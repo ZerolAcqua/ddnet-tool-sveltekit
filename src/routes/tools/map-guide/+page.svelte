@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { browser } from '$app/environment';
   import Navigation from '$lib/components/Navigation.svelte';
   
   // DDNet 地图数据接口
@@ -104,14 +105,24 @@
   // 获取地图数据
   async function loadMaps() {
     try {
-      const response = await fetch('https://ddnet.org/releases/maps.json');
+      const response = await fetch('/api/maps');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json();
-      maps = data;
-      console.log(`加载了 ${maps.length} 个地图`);
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.message || result.error);
+      }
+      
+      maps = result.data;
+      console.log(`加载了 ${maps.length} 个地图 (来源: ${result.fromCache ? '缓存' : 'API'})`);
+      
+      // 如果有错误信息（比如API失败但使用了缓存），显示警告
+      if (result.error && result.fromCache) {
+        console.warn('注意：', result.error);
+      }
     } catch (err) {
       console.error('加载地图数据失败:', err);
       error = err instanceof Error ? err.message : '加载失败';
@@ -155,14 +166,18 @@
     previewMap = map;
     showMapPreview = true;
     // 禁用主页面滚动
-    document.body.style.overflow = 'hidden';
+    if (browser) {
+      document.body.style.overflow = 'hidden';
+    }
   }
 
   function closeMapPreview() {
     showMapPreview = false;
     previewMap = null;
     // 恢复主页面滚动
-    document.body.style.overflow = 'auto';
+    if (browser) {
+      document.body.style.overflow = 'auto';
+    }
   }
 
   // 键盘事件处理
@@ -198,7 +213,9 @@
 
   onDestroy(() => {
     // 确保组件销毁时恢复滚动
-    document.body.style.overflow = 'auto';
+    if (browser) {
+      document.body.style.overflow = 'auto';
+    }
   });
 </script>
 
@@ -448,80 +465,78 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {#each paginatedMaps as map}
           <div class="card hover:border-blue-500/50 transition-colors">
-            <!-- 地图缩略图 -->
-            <div class="w-full h-32 bg-gray-800 rounded-lg mb-3 overflow-hidden">
-              <img 
-                src={map.thumbnail}
-                alt="{map.name} 地图缩略图"
-                class="w-full h-full object-cover"
-                loading="lazy"
-                on:error={(e) => {
-                  // 如果图片加载失败，显示占位符
-                  if (e.target) {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }
-                  (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 text-sm">暂无缩略图</div>';
-                }}
-              />
-            </div>
-            
-            <!-- 地图名称 -->
+            <!-- 地图名称和难度信息 -->
             <div class="flex items-start justify-between mb-3">
               <h3 class="text-lg font-semibold text-white truncate flex-1">
                 {map.name}
               </h3>
-              <div class="flex flex-col gap-1 ml-2 flex-shrink-0">
-                <span class="px-2 py-1 text-xs rounded {getDifficultyColor(map.difficulty)} text-center">
-                  {map.difficulty}★
+              <div class="ml-2 flex-shrink-0">
+                <span class="px-2 py-1 text-sm rounded {getDifficultyColor(map.difficulty)} text-center inline-flex items-center gap-1">
+                  <span class="text-sm opacity-75">{map.type}</span>
+                  <span>{map.difficulty}★</span>
+                  <span class="text-sm opacity-75">{map.points} pts</span>
                 </span>
-                <span class="px-2 py-1 text-xs rounded bg-gray-700 text-gray-300 text-center text-[10px]">
-                  {map.type}
-                </span>
+              </div>
+            </div>
+            
+            <!-- 地图缩略图 -->
+            <div class="w-full h-40 bg-gray-800 rounded-lg mb-3 overflow-hidden relative group">
+              <img 
+                src={map.thumbnail}
+                alt="{map.name} 地图缩略图"
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+                on:error={(e) => {
+                  // 如果图片加载失败，显示占位符（仅在客户端）
+                  if (browser && e.target) {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    const parent = (e.target as HTMLImageElement).parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 text-sm">暂无缩略图</div>';
+                    }
+                  }
+                }}
+              />
+              
+              <!-- 悬浮操作按钮 -->
+              <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+                {#if map.website}
+                  <a 
+                    href={map.website} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium"
+                  >
+                    查看详情
+                  </a>
+                {/if}
+                {#if map.web_preview}
+                  <button 
+                    type="button"
+                    on:click={() => openMapPreview(map)}
+                    class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors font-medium"
+                  >
+                    在线预览
+                  </button>
+                {/if}
               </div>
             </div>
             
             <!-- 地图信息 -->
             <div class="space-y-2 text-sm text-gray-400 mb-4">
-              <div class="flex justify-between">
-                <span>分数:</span>
-                <span class="text-gray-300">{map.points}</span>
+              <div class="flex items-start">
+                <span class="flex-shrink-0 mr-2">作者:</span>
+                <span class="text-gray-300 truncate flex-1" title={map.mapper}>{map.mapper}</span>
               </div>
-              <div class="flex justify-between">
-                <span>作者:</span>
-                <span class="text-gray-300 truncate" title={map.mapper}>{map.mapper}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>发布:</span>
-                <span class="text-gray-300">{new Date(map.release).toLocaleDateString()}</span>
+              <div class="flex items-start">
+                <span class="flex-shrink-0 mr-2">发布:</span>
+                <span class="text-gray-300">{new Date(map.release).toLocaleDateString('zh-CN')}</span>
               </div>
               {#if map.median_time}
-                <div class="flex justify-between">
-                  <span>平均用时:</span>
+                <div class="flex items-start">
+                  <span class="flex-shrink-0 mr-2">平均用时:</span>
                   <span class="text-gray-300">{formatTime(map.median_time)}</span>
                 </div>
-              {/if}
-            </div>
-            
-            <!-- 操作按钮 -->
-            <div class="mt-auto space-y-2">
-              {#if map.website}
-                <a 
-                  href={map.website} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  class="btn-secondary w-full text-center block py-2"
-                >
-                  查看详情
-                </a>
-              {/if}
-              {#if map.web_preview}
-                <button 
-                  type="button"
-                  on:click={() => openMapPreview(map)}
-                  class="btn-primary w-full text-center block py-2"
-                >
-                  在线预览
-                </button>
               {/if}
             </div>
           </div>
@@ -593,16 +608,17 @@
   <div 
     class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
     on:click={closeMapPreview}
+    on:keydown={(e) => e.key === 'Escape' && closeMapPreview()}
     on:wheel|preventDefault
     role="dialog"
     aria-modal="true"
     aria-labelledby="map-preview-title"
+    tabindex="0"
   >
     <!-- 模态框内容 -->
     <div 
       class="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-6xl h-[80vh] flex flex-col mx-4"
-      on:click|stopPropagation
-      on:wheel|stopPropagation
+      role="document"
     >
       <!-- 模态框头部 -->
       <div class="flex items-center justify-between p-4 border-b border-gray-700">
@@ -622,7 +638,7 @@
       </div>
       
       <!-- iframe 内容区域 -->
-      <div class="flex-1 p-4">
+      <div class="flex-1 p-4" role="presentation" on:click|stopPropagation on:keydown|stopPropagation>
         <iframe 
           src={previewMap.web_preview}
           class="w-full h-full border border-gray-600 rounded"
@@ -633,11 +649,13 @@
       </div>
       
       <!-- 模态框底部 -->
-      <div class="p-4 border-t border-gray-700 flex justify-between items-center">
-        <div class="text-sm text-gray-400">
-          <span class="mr-4">类型: {previewMap.type}</span>
-          <span class="mr-4">难度: ★{previewMap.difficulty}</span>
-          <span>分数: {previewMap.points}</span>
+      <div class="p-4 border-t border-gray-700 flex justify-between items-center" role="presentation" on:click|stopPropagation>
+        <div class="flex items-center gap-3">
+          <span class="px-3 py-1 text-sm rounded {getDifficultyColor(previewMap.difficulty)} inline-flex items-center gap-1">
+            <span class="text-sm opacity-75">{previewMap.type}</span>
+            <span>{previewMap.difficulty}★</span>
+            <span class="text-sm opacity-75">{previewMap.points} pts</span>
+          </span>
         </div>
         <div class="flex gap-2">
           {#if previewMap.website}
