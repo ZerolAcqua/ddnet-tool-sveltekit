@@ -18,20 +18,20 @@ export const tools: Tool[] = [
     hideNotAuth: false
   },
   {
+    id: 'map-guide',
+    name: '地图攻略',
+    description: '浏览 DDNet 地图信息和攻略视频，支持按难度筛选和搜索',
+    available: true,
+    requireAuth: false,
+    hideNotAuth: false
+  },
+  {
     id: 'server-browser',
     name: '服务器浏览器',
     description: '浏览所有 DDNet 服务器状态和玩家信息',
     available: false,
     requireAuth: true,
     hideNotAuth: true
-  },
-  {
-    id: 'map-guide',
-    name: '地图攻略',
-    description: '提供 DDNet 地图的视频教程列表',
-    available: false,
-    requireAuth: false,
-    hideNotAuth: false
   }
 ];
 
