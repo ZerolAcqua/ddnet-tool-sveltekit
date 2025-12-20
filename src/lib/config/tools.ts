@@ -1,0 +1,46 @@
+// 工具配置文件
+export interface Tool {
+  id: string;
+  name: string;
+  description: string;
+  available: boolean;
+  requireAuth: boolean;
+  hideNotAuth: boolean;
+}
+
+export const tools: Tool[] = [
+  {
+    id: 'player-tracker',
+    name: '玩家追踪器',
+    description: '实时追踪 DDNet 玩家在线状态，支持上线通知和服务器信息查看',
+    available: true,
+    requireAuth: true,
+    hideNotAuth: false
+  },
+  {
+    id: 'server-browser',
+    name: '服务器浏览器',
+    description: '浏览所有 DDNet 服务器状态和玩家信息',
+    available: false,
+    requireAuth: true,
+    hideNotAuth: true
+  },
+  {
+    id: 'map-guide',
+    name: '地图攻略',
+    description: '提供 DDNet 地图的视频教程列表',
+    available: false,
+    requireAuth: false,
+    hideNotAuth: false
+  }
+];
+
+// 工具统计辅助函数
+export function getToolStats() {
+  return {
+    total: tools.length,
+    available: tools.filter(tool => tool.available).length,
+    requireAuth: tools.filter(tool => tool.requireAuth).length,
+    public: tools.filter(tool => !tool.requireAuth).length
+  };
+}

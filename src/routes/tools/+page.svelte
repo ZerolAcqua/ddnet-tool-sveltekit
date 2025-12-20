@@ -3,36 +3,11 @@
   import { authState } from '$lib/stores/auth';
   import { onMount } from 'svelte';
   import { initAuth } from '$lib/stores/auth';
+  import { tools } from '$lib/config/tools';
   
   onMount(() => {
     initAuth();
   });
-  
-  const tools = [
-    {
-      id: 'player-tracker',
-      name: '玩家追踪器',
-      description: '实时追踪 DDNet 玩家在线状态，支持上线通知和服务器信息查看',
-      available: true,
-      requireAuth: true,
-      hideNotAuth: false
-    },
-    {
-      id: 'server-browser',
-      name: '服务器浏览器',
-      description: '浏览所有 DDNet 服务器状态和玩家信息',
-      available: false,
-      requireAuth: true,
-      hideNotAuth: true
-    },
-    {
-      id: 'map-guide',
-      name: '地图攻略',
-      description: '提供 DDNet 地图的视频教程列表',
-      available: false,
-      requireAuth: false,
-    }
-  ];
 </script>
 
 <svelte:head>

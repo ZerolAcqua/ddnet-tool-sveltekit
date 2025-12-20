@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import Navigation from '$lib/components/Navigation.svelte';
+  import { onMount } from "svelte";
+  import Navigation from "$lib/components/Navigation.svelte";
+  import { tools, getToolStats } from "$lib/config/tools";
 
   // 页面数据由 +page.ts 加载函数提供
   export const data = undefined;
@@ -12,9 +13,14 @@
   let showDeleteModal = false;
   let userToDelete: any = null;
   let deleteLoading = false;
+  let systemStatus = 'checking'; // checking, healthy, error
+  let statusMessage = '检查中...';
+
+  // 计算工具统计
+  $: toolStats = getToolStats();
 
   onMount(async () => {
-    await Promise.all([loadUsers(), loadSettings()]);
+    await Promise.all([loadUsers(), loadSettings(), checkSystemHealth()]);
   });
 
   async function loadUsers() {
@@ -40,6 +46,58 @@
       console.error('加载系统设置失败:', error);
     } finally {
       isLoading = false;
+    }
+  }
+
+  async function checkSystemHealth() {
+    /* 
+     * TODO: 系统健康检查功能需要进一步完善
+     * 
+     * 当前问题:
+     * 1. 只检查基础API端点，不够全面
+     * 2. 缺少数据库连接检查
+     * 3. 缺少外部服务（DDNet API）状态检查
+     * 4. 没有响应时间监控
+     * 5. 缺少历史状态记录
+     * 
+     * 改进计划:
+     * - 将健康检查逻辑提取为独立模块 (/lib/health/)
+     * - 添加更详细的检查项目（数据库、缓存、第三方API等）
+     * - 实现检查结果缓存和历史记录
+     * - 添加性能指标监控（响应时间、内存使用等）
+     * - 支持不同级别的健康检查（快速/完整）
+     * - 添加告警和通知机制
+     */
+    try {
+      // 检查多个系统组件的健康状态
+      const healthChecks = [
+        { name: '用户API', url: '/api/admin/users' },
+        { name: '设置API', url: '/api/admin/settings' },
+        { name: '工具API', url: '/api/tools/player-tracker' }
+      ];
+
+      const results = await Promise.allSettled(
+        healthChecks.map(async (check) => {
+          const response = await fetch(check.url);
+          return { name: check.name, ok: response.ok, status: response.status };
+        })
+      );
+
+      const failedChecks = results.filter(
+        (result) => result.status === 'rejected' || !result.value.ok
+      );
+
+      if (failedChecks.length === 0) {
+        systemStatus = 'healthy';
+        statusMessage = '运行正常';
+      } else {
+        systemStatus = 'error';
+        statusMessage = `${failedChecks.length} 个服务异常`;
+      }
+    } catch (error) {
+      console.error('系统健康检查失败:', error);
+      systemStatus = 'error';
+      statusMessage = '检查失败';
     }
   }
 
@@ -149,12 +207,23 @@
       
       <div class="card text-center">
         <h3 class="text-xl font-semibold mb-1">工具数量</h3>
-        <p class="text-gray-400">1 个工具</p>
+        <p class="text-gray-400">{toolStats.available} 个工具可用</p>
       </div>
       
       <div class="card text-center">
         <h3 class="text-xl font-semibold mb-1">系统状态</h3>
-        <p class="text-gray-400">运行正常</p>
+        <div class="flex items-center justify-center gap-2">
+          {#if systemStatus === 'checking'}
+            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+            <p class="text-yellow-400">{statusMessage}</p>
+          {:else if systemStatus === 'healthy'}
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <p class="text-green-400">{statusMessage}</p>
+          {:else}
+            <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+            <p class="text-red-400">{statusMessage}</p>
+          {/if}
+        </div>
       </div>
     </div>
 
