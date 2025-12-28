@@ -21,7 +21,7 @@ export const tools: Tool[] = [
     id: 'map-guide',
     name: '地图攻略',
     description: '浏览 DDNet 地图信息和攻略视频，支持按难度筛选和搜索',
-    available: true,
+    available: false,
     requireAuth: false,
     hideNotAuth: false
   },

@@ -57,9 +57,42 @@ export interface PlayerItem {
  * 获取 DDNet 全服数据
  */
 async function fetchServers(): Promise<ServersData> {
-    const res = await fetch(DDNET_API);
-    if (!res.ok) throw new Error("无法获取 DDNet 服务器数据");
-    return await res.json();
+    // 使用带超时与重试的 fetch 封装，避免因短暂网络抖动导致整个请求失败
+    const MAX_RETRIES = 3;
+    const TIMEOUT_MS = 5000; // 每次请求的超时时间
+
+    async function fetchWithTimeout(url: string, timeoutMs: number) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(id);
+            return res;
+        } catch (err) {
+            clearTimeout(id);
+            throw err;
+        }
+    }
+
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const res = await fetchWithTimeout(DDNET_API, TIMEOUT_MS);
+            if (!res.ok) throw new Error("无法获取 DDNet 服务器数据: HTTP " + res.status);
+            return await res.json();
+        } catch (err) {
+            lastError = err;
+            // 对短暂网络错误进行指数退避
+            const backoff = 200 * Math.pow(2, attempt - 1);
+            console.warn(`fetchServers attempt ${attempt} failed:`, err);
+            if (attempt < MAX_RETRIES) {
+                await new Promise(resolve => setTimeout(resolve, backoff));
+            }
+        }
+    }
+
+    // 所有尝试失败，抛出最近的错误
+    throw lastError || new Error('无法获取 DDNet 服务器数据');
 }
 
 /**
@@ -155,8 +188,20 @@ export const POST = async ({ request }: RequestEvent) => {
       players 
     });
 
-  } catch (error) {
-    console.error('查询玩家失败:', error);
-    return json({ success: false, message: '查询失败，请稍后重试' }, { status: 500 });
-  }
+    } catch (error: any) {
+        console.error('查询玩家失败:', error);
+
+        // 检测是否为网络相关错误（超时/连接失败），并返回 502 表示上游服务不可达
+        const isNetworkError = error && (
+            error.name === 'AbortError' ||
+            (error.code && error.code === 'ETIMEDOUT') ||
+            (typeof error.message === 'string' && (error.message.includes('timed out') || error.message.includes('fetch')))
+        );
+
+        if (isNetworkError) {
+            return json({ success: false, message: '无法连接到 DDNet API，请稍后重试' }, { status: 502 });
+        }
+
+        return json({ success: false, message: '查询失败，请稍后重试' }, { status: 500 });
+    }
 };
