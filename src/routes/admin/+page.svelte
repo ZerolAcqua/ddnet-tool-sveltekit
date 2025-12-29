@@ -8,6 +8,8 @@
   let isUpdatingSettings = false;
   let systemStatus = 'checking'; // checking, healthy, error
   let statusMessage = '检查中...';
+  let message: string = '';
+  let errorMessage: string = '';
 
   // 计算工具统计
   $: toolStats = getToolStats();
@@ -101,16 +103,18 @@
 
       if (response.ok) {
         settings.registrationDisabled = newValue;
-        // 显示成功消息（可选）
-        console.log('设置已更新');
+        message = '设置已更新';
+        setTimeout(() => { message = ''; }, 3000);
       } else {
         const errorData = await response.json();
         console.error('更新设置失败:', errorData.message);
-        alert('更新设置失败: ' + errorData.message);
+        errorMessage = '更新设置失败: ' + errorData.message;
+        setTimeout(() => { errorMessage = ''; }, 5000);
       }
     } catch (error) {
       console.error('更新设置失败:', error);
-      alert('更新设置失败，请重试');
+      errorMessage = '更新设置失败，请重试';
+      setTimeout(() => { errorMessage = ''; }, 5000);
     } finally {
       isUpdatingSettings = false;
     }
@@ -214,7 +218,6 @@
                   已启用
                 </span>
               {/if}
-              
               <!-- 开关按钮 -->
               <button
                 on:click={toggleRegistrationSetting}
@@ -234,7 +237,6 @@
               </button>
             </div>
           </div>
-          
           <div class="text-sm text-gray-400">
             {#if settings.registrationDisabled}
               新用户无法注册，但现有用户可以正常登录。
@@ -245,6 +247,12 @@
               <span class="text-yellow-400">正在更新...</span>
             {/if}
           </div>
+          {#if message}
+            <div class="mt-3 p-2 rounded bg-green-900/40 text-green-300 border border-green-700/40 text-sm">{message}</div>
+          {/if}
+          {#if errorMessage}
+            <div class="mt-3 p-2 rounded bg-red-900/40 text-red-300 border border-red-700/40 text-sm">{errorMessage}</div>
+          {/if}
         </div>
       </div>
     </div>

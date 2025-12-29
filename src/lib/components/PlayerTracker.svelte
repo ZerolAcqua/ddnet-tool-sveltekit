@@ -32,6 +32,8 @@
   let results: PlayerItem[] = [];
   let loading: boolean = false;
   let error: string = ''; // 错误信息
+  let message: string = '';
+  let errorMessage: string = '';
   let previousResults: PlayerItem[] = []; // 用于比较状态变化
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lastManualRefresh = 0;
@@ -77,12 +79,8 @@
     // 如果已被拒绝，提示用户手动启用
     if (Notification.permission === 'denied') {
       console.log('❌ 权限已被拒绝');
-      // Windows 用户可能需要在系统设置中启用
-      if (navigator.userAgent.includes('Windows')) {
-        alert('通知权限被拒绝。请按以下步骤启用：\n\n1. 打开 Windows 设置 → 系统 → 通知和操作\n2. 确保允许应用和网站发送通知\n3. 在 Chrome 设置中允许本网站发送通知');
-      } else {
-        alert('通知权限被拒绝。请在浏览器设置中手动启用本站点的通知权限。');
-      }
+      errorMessage = '通知权限被拒绝。请在浏览器设置中手动启用本站点的通知权限。';
+      setTimeout(() => { errorMessage = ''; }, 8000);
       return 'denied';
     }
     
@@ -293,7 +291,8 @@
       }
     } catch (err) {
       console.error('加载追踪玩家列表失败:', err);
-      error = '网络错误，请检查网络连接或稍后重试';
+      errorMessage = '网络错误，请检查网络连接或稍后重试';
+      setTimeout(() => { errorMessage = ''; }, 5000);
     }
   }
 
@@ -396,7 +395,8 @@
       }
     } catch (err) {
       console.error('查询玩家失败:', err);
-      error = '网络错误，请检查网络连接或稍后重试';
+      errorMessage = '网络错误，请检查网络连接或稍后重试';
+      setTimeout(() => { errorMessage = ''; }, 5000);
     } finally {
       loading = false;
     }
@@ -526,6 +526,12 @@
 </script>
 
 <div class="space-y-6">
+  {#if errorMessage}
+    <div class="mb-4 p-2 rounded bg-red-900/40 text-red-300 border border-red-700/40">{@html errorMessage}</div>
+  {/if}
+  {#if message}
+    <div class="mb-4 p-2 rounded bg-green-900/40 text-green-300 border border-green-700/40">{message}</div>
+  {/if}
   <!-- 追踪玩家管理 -->
   <PlayerManager players={trackedPlayers} onUpdate={handleTrackingUpdate} />
 
