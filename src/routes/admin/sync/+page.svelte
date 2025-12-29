@@ -195,7 +195,7 @@
       <div class="text-gray-300 space-y-2">
         <p>• 系统会自动检测是否需要同步（每24小时同步一次）</p>
         <p>• 访问地图指南页面时会自动检查并后台同步</p>
-        <p>• 可以手动点击"强制同步"按钮立即同步最新数据</p>
+        <p>• 可以手动点击“强制同步”按钮立即同步最新数据</p>
         <p>• 同步期间不会影响现有功能的使用</p>
         <p>• 数据来源：<a href="https://ddnet.org/releases/maps.json" class="text-blue-400 hover:text-blue-300">DDNet 官方 API</a></p>
       </div>

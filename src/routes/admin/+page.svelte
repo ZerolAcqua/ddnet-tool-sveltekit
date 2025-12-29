@@ -200,7 +200,7 @@
         <div class="border border-gray-600 rounded-lg p-4">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h4 class="font-medium text-white">用户注册</h4>
+              <h4 class="font-medium text-white mb-3">用户注册</h4>
               <p class="text-sm text-gray-400">控制新用户是否可以注册账号</p>
             </div>
             <div class="flex items-center space-x-3">
