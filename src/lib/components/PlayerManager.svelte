@@ -1,6 +1,7 @@
 <script lang="ts">
   import { browser } from '$app/environment';
   import { onDestroy } from 'svelte';
+  import { toast } from '$lib/stores/toast';
   
   // 自动聚焦指令
   function focusOnMount(element: HTMLInputElement) {
@@ -24,8 +25,9 @@
   let isVisible = false;
   let isLoading = false;
   let isBulkLoading = false; // 批量操作专用加载状态
-  let message = '';
   let showClearConfirm = false;
+  let showDeleteConfirm = false;
+  let playerToDelete: TrackedPlayer | null = null;
   
   // 防抖相关变量
   let updateTimer: ReturnType<typeof setTimeout> | null = null;
@@ -113,7 +115,6 @@
     }
 
     isLoading = true;
-    message = '';
 
     try {
       const response = await fetch('/api/tools/player-tracker', {
@@ -130,20 +131,20 @@
 
       if (result.success) {
         newPlayerName = '';
-        message = result.message;
+        toast.success(result.message);
         
         // 使用防抖更新列表 - 添加玩家不需要立即搜索
         debounceUpdate(false);
       } else {
         if (response.status === 401) {
-          message = '登录已过期，请重新登录';
+          toast.error('登录已过期，请重新登录');
         } else {
-          message = result.message || '添加玩家失败';
+          toast.error(result.message || '添加玩家失败');
         }
       }
     } catch (error) {
       console.error('添加玩家失败:', error);
-      message = '网络错误，添加失败';
+      toast.error('网络错误，添加失败');
     } finally {
       isLoading = false;
     }
@@ -160,19 +161,20 @@
       const result = await response.json();
 
       if (result.success) {
+        toast.success('玩家已删除');
         return true;
       } else {
         console.error('删除玩家失败:', result.message);
         if (response.status === 401) {
-          message = '登录已过期，请重新登录';
+          toast.error('登录已过期，请重新登录');
         } else {
-          message = result.message || '删除玩家失败';
+          toast.error(result.message || '删除玩家失败');
         }
         return false;
       }
     } catch (error) {
       console.error('删除玩家失败:', error);
-      message = '网络错误，删除失败';
+      toast.error('网络错误，删除失败');
       return false;
     }
   }
@@ -196,15 +198,15 @@
       } else {
         console.error('更新玩家设置失败:', result.message);
         if (response.status === 401) {
-          message = '登录已过期，请重新登录';
+          toast.error('登录已过期，请重新登录');
         } else {
-          message = result.message || '更新玩家设置失败';
+          toast.error(result.message || '更新玩家设置失败');
         }
         return false;
       }
     } catch (error) {
       console.error('更新玩家设置失败:', error);
-      message = '网络错误，更新失败';
+      toast.error('网络错误，更新失败');
       return false;
     }
   }
@@ -217,8 +219,24 @@
 
   // 删除单个玩家的包装函数
   async function deletePlayer(id: string) {
-    await removePlayer(id);
+    const player = players.find(p => p.id === id);
+    if (player) {
+      playerToDelete = player;
+      showDeleteConfirm = true;
+    }
+  }
+
+  async function confirmDeletePlayer() {
+    if (!playerToDelete) return;
+    await removePlayer(playerToDelete.id);
+    showDeleteConfirm = false;
+    playerToDelete = null;
     debounceUpdate(false); // 删除不需要搜索
+  }
+
+  function cancelDeletePlayer() {
+    showDeleteConfirm = false;
+    playerToDelete = null;
   }
 
   function startEdit(id: string, currentName: string) {
@@ -245,7 +263,6 @@
     }
 
     isLoading = true;
-    message = '';
 
     try {
       const response = await fetch(`/api/tools/player-tracker/${editingId}`, {
@@ -261,15 +278,15 @@
       const result = await response.json();
       
       if (result.success) {
-        message = '玩家名更新成功';
+        toast.success('玩家名更新成功');
         cancelEdit();
         debounceUpdate(false); // 编辑玩家名不需要搜索
       } else {
-        message = result.message;
+        toast.error(result.message);
       }
     } catch (error) {
       console.error('更新玩家名失败:', error);
-      message = '更新失败，请稍后重试';
+      toast.error('更新失败，请稍后重试');
     } finally {
       isLoading = false;
     }
@@ -297,9 +314,6 @@
   }
 
   // 清除消息
-  function clearMessage() {
-    message = '';
-  }
 
   // 防抖更新函数
   function debounceUpdate(shouldSearch = false) {
@@ -314,12 +328,11 @@
     }, UPDATE_DEBOUNCE);
   }
 
-  // 清空所有玩家
+  // 清除所有玩家
   async function clearAllPlayers() {
     if (isLoading || players.length === 0) return;
 
     isLoading = true;
-    message = '';
 
     try {
       const response = await fetch('/api/tools/player-tracker', {
@@ -329,21 +342,21 @@
       const result = await response.json();
 
       if (result.success) {
-        message = result.message;
+        toast.success(result.message);
         showClearConfirm = false;
         debounceUpdate();
       } else {
         if (response.status === 401) {
-          message = '登录已过期，请重新登录';
+          toast.error('登录已过期，请重新登录');
           showClearConfirm = false; // 关闭确认对话框
         } else {
-          message = result.message;
+          toast.error(result.message);
           showClearConfirm = false; // 其他错误也关闭对话框
         }
       }
     } catch (error) {
       console.error('清空玩家列表失败:', error);
-      message = '网络错误，清空失败';
+      toast.error('网络错误，清空失败');
       showClearConfirm = false; // 网络错误也关闭对话框
     } finally {
       isLoading = false;
@@ -381,7 +394,6 @@
     if (selectedPlayerIds.size === 0) return;
     
     isBulkLoading = true;
-    message = '';
 
     try {
       const promises = Array.from(selectedPlayerIds).map(async playerId => {
@@ -405,14 +417,14 @@
       
       selectedPlayerIds = new Set();
       showBulkConfirm = false;
-      message = `批量操作完成，影响 ${promises.length} 个玩家`;
+      toast.success(`批量操作完成，影响 ${promises.length} 个玩家`);
       
       // 批量操作后使用防抖更新
       debounceUpdate();
       
     } catch (error) {
       console.error('批量操作失败:', error);
-      message = '批量操作失败，请稍后重试';
+      toast.error('批量操作失败，请稍后重试');
       showBulkConfirm = false; // 确保在错误时关闭确认对话框
     } finally {
       isBulkLoading = false;
@@ -469,13 +481,14 @@
       }
       
       if (playerNames.length === 0) {
-        message = '没有找到有效的玩家名';
+        toast.warning('没有找到有效的玩家名');
         return;
       }
       
       isLoading = true;
       let successCount = 0;
       let duplicateCount = 0;
+      let errorCount = 0;
       
       for (const playerName of playerNames) {
         try {
@@ -490,28 +503,33 @@
             successCount++;
           } else if (result.message.includes('已在追踪列表中')) {
             duplicateCount++;
+          } else {
+            errorCount++;
           }
         } catch (error) {
           console.error(`导入玩家 ${playerName} 失败:`, error);
+          errorCount++;
         }
       }
       
-      message = `导入完成：成功 ${successCount} 个，重复 ${duplicateCount} 个`;
+      if (successCount > 0) {
+        const parts = [`成功 ${successCount} 个`];
+        if (duplicateCount > 0) parts.push(`重复 ${duplicateCount} 个`);
+        if (errorCount > 0) parts.push(`失败 ${errorCount} 个`);
+        toast.success(`导入完成：${parts.join('，')}`);
+      } else {
+        toast.warning(`导入完成：重复 ${duplicateCount} 个，失败 ${errorCount} 个`);
+      }
       importText = '';
       showImportDialog = false;
       debounceUpdate();
       
     } catch (error) {
       console.error('导入失败:', error);
-      message = '导入失败，请检查格式';
+      toast.error('导入失败，请检查格式');
     } finally {
       isLoading = false;
     }
-  }
-
-  // 自动清除消息
-  $: if (message && browser) {
-    setTimeout(clearMessage, 5000);
   }
 
   // 组件销毁时清理定时器
@@ -539,18 +557,6 @@
   {#if isVisible}
     <div class="mt-4 card">
       <h3 class="text-lg font-semibold mb-4 text-white">玩家追踪列表管理</h3>
-      
-      <!-- 消息提示 -->
-      {#if message}
-        <div class="mb-4 p-3 bg-blue-900/50 border border-blue-500 rounded-lg">
-          <div class="flex justify-between items-center">
-            <p class="text-blue-300 text-sm">{message}</p>
-            <button on:click={clearMessage} class="btn-icon" title="关闭消息">
-              ×
-            </button>
-          </div>
-        </div>
-      {/if}
       
       <!-- 添加新玩家 -->
       <div class="mb-6">
@@ -1008,5 +1014,39 @@
         </button>
       </div>
     </div>
+  </div>
+{/if}
+
+<!-- 删除单个玩家确认对话框 -->
+{#if showDeleteConfirm && playerToDelete}
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" tabindex="-1" on:keydown={(e) => e.key === 'Escape' && cancelDeletePlayer()}>
+    <section class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4" role="document">
+      <h3 class="text-lg font-semibold text-white mb-4">确认删除玩家</h3>
+      <p class="text-gray-300 mb-6">
+        您确定要删除以下玩家吗？此操作不可撤销。
+      </p>
+      <div class="bg-gray-700/50 rounded p-3 mb-6">
+        <p class="text-white font-medium">{playerToDelete.playerName}</p>
+        <p class="text-gray-400 text-sm mt-1">
+          追踪状态：{playerToDelete.isActive ? '已启用' : '已禁用'} | 通知：{playerToDelete.notificationEnabled ? '开启' : '关闭'}
+        </p>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button
+          class="btn-secondary"
+          on:click={cancelDeletePlayer}
+          disabled={isLoading}
+        >
+          取消
+        </button>
+        <button
+          class="btn-danger"
+          on:click={confirmDeletePlayer}
+          disabled={isLoading}
+        >
+          {isLoading ? '删除中...' : '确认删除'}
+        </button>
+      </div>
+    </section>
   </div>
 {/if}

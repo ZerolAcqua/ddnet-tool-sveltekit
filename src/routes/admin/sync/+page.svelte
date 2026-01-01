@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Navigation from '$lib/components/Navigation.svelte';
+  import { toast } from '$lib/stores/toast';
   
   interface SyncStatus {
     lastSync: string | null;
@@ -13,7 +14,6 @@
   
   let syncStatus: SyncStatus | null = null;
   let syncInProgress = false;
-  let syncMessage = '';
   
   async function loadSyncStatus() {
     try {
@@ -38,7 +38,6 @@
   
   async function forcSync() {
     syncInProgress = true;
-    syncMessage = '';
     
     try {
       const response = await fetch('/api/admin/sync-maps', {
@@ -55,29 +54,29 @@
       if (!response.ok) {
         // 处理认证/授权错误
         if (response.status === 401 || response.status === 403) {
-          syncMessage = `同步失败 - ${result.message || '请先登录或权限不足'}`;
+          toast.error(`${result.message || '请先登录或权限不足'}`);
           // 如果是认证错误，可能需要跳转到登录页面
           if (response.status === 401) {
             // 可以在这里添加跳转逻辑，或者显示重新登录提示
             console.warn('用户未登录，需要重新认证');
           }
         } else {
-          syncMessage = `同步失败 - ${result.message || '服务器错误'}`;
+          toast.error(`${result.message || '服务器错误'}`);
         }
         return; // 提前返回，不继续执行后续逻辑
       }
       
       // 处理成功响应
       if (result.success) {
-        syncMessage = `同步成功 - 同步了 ${result.syncedMaps} 个地图`;
+        toast.success(`同步成功 - 同步了 ${result.syncedMaps} 个地图`);
         // 刷新状态
         await loadSyncStatus();
       } else {
-        syncMessage = `同步失败 - ${result.message}`;
+        toast.error(`${result.message}`);
       }
       
     } catch (error) {
-      syncMessage = `同步失败: ${error instanceof Error ? error.message : '网络错误或服务不可用'}`;
+      toast.error(`${error instanceof Error ? error.message : '网络错误或服务不可用'}`);
     } finally {
       syncInProgress = false;
     }
@@ -181,12 +180,6 @@
           刷新状态
         </button>
       </div>
-      
-      {#if syncMessage}
-        <div class="p-3 rounded {syncMessage.includes('成功') ? 'bg-green-900/20 text-green-300' : 'bg-red-900/20 text-red-300'}">
-          {syncMessage}
-        </div>
-      {/if}
     </div>
     
     <!-- 说明信息 -->

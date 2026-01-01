@@ -1,14 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Navigation from "$lib/components/Navigation.svelte";
+  import { toast } from "$lib/stores/toast";
 
   let users: any[] = [];
   let isLoading = true;
   let showDeleteModal = false;
   let userToDelete: any = null;
   let deleteLoading = false;
-  let errorMessage: string = '';
-  let message: string = '';
 
   onMount(async () => {
     await loadUsers();
@@ -50,18 +49,18 @@
       if (response.ok) {
         // 重新加载用户列表
         await loadUsers();
-        message = '用户已删除';
-        setTimeout(() => { message = ''; }, 3000);
+        toast.success('用户已删除');
       } else {
-        const errorData = await response.json();
-        console.error('删除用户失败:', errorData.message);
-        errorMessage = '删除用户失败: ' + errorData.message;
-        setTimeout(() => { errorMessage = ''; }, 5000);
+        try {
+          const errorData = await response.json();
+          toast.error('删除用户失败: ' + (errorData.message || '服务器错误'));
+        } catch (parseError) {
+          toast.error(`删除用户失败: HTTP ${response.status} 错误`);
+        }
       }
     } catch (error) {
       console.error('删除用户失败:', error);
-      errorMessage = '删除用户失败，请重试';
-      setTimeout(() => { errorMessage = ''; }, 5000);
+      toast.error('删除用户失败，请重试');
     } finally {
       deleteLoading = false;
       showDeleteModal = false;
@@ -77,12 +76,6 @@
 <Navigation />
 
 <div class="container mx-auto max-w-7xl px-6 py-8">
-  {#if errorMessage}
-    <div class="mb-4 p-2 rounded bg-red-900/40 text-red-300 border border-red-700/40">{errorMessage}</div>
-  {/if}
-  {#if message}
-    <div class="mb-4 p-2 rounded bg-green-900/40 text-green-300 border border-green-700/40">{message}</div>
-  {/if}
   <!-- 返回导航 -->
   <div class="mb-4">
     <a href="/admin" class="text-gray-400 hover:text-white transition-colors">

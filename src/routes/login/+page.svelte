@@ -105,7 +105,13 @@
           })
         });
 
-        const result = await response.json();
+        let result;
+        try {
+          result = await response.json();
+        } catch (parseError) {
+          message = `登录失败: HTTP ${response.status} 错误`;
+          return;
+        }
         
         if (result.success) {
           clearForm();
@@ -163,7 +169,13 @@
               })
             });
 
-            const loginResult = await loginResponse.json();
+            let loginResult;
+            try {
+              loginResult = await loginResponse.json();
+            } catch (parseError) {
+              message = `登录失败: HTTP ${loginResponse.status} 错误`;
+              return;
+            }
             
             if (loginResult.success) {
               clearForm();

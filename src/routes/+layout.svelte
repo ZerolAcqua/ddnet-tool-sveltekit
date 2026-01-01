@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { authState, initAuth } from '$lib/stores/auth';
+  import ToastContainer from '$lib/components/ToastContainer.svelte';
   
   let { children, data } = $props();
 
@@ -18,6 +19,7 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gray-900">
+  <ToastContainer />
   <main>
     {@render children?.()}
   </main>

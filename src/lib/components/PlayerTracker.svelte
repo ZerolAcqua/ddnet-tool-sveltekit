@@ -3,6 +3,7 @@
   import { browser } from '$app/environment';
   import PlayerCard from '$lib/components/PlayerCard.svelte';
   import PlayerManager from '$lib/components/PlayerManager.svelte';
+  import { toast } from '$lib/stores/toast';
 
   interface TrackedPlayer {
     id: string;
@@ -31,9 +32,6 @@
   let trackedPlayers: TrackedPlayer[] = [];
   let results: PlayerItem[] = [];
   let loading: boolean = false;
-  let error: string = ''; // 错误信息
-  let message: string = '';
-  let errorMessage: string = '';
   let previousResults: PlayerItem[] = []; // 用于比较状态变化
   let timer: ReturnType<typeof setTimeout> | null = null;
   let lastManualRefresh = 0;
@@ -48,16 +46,6 @@
   let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
   // 清除错误信息
-  function clearError() {
-    error = '';
-  }
-
-  // 自动清除错误信息
-  $: if (error && browser) {
-    setTimeout(() => {
-      error = '';
-    }, 8000); // 8秒后自动清除
-  }
 
   // 请求通知权限 - Windows 兼容版本
   async function requestNotificationPermission() {
@@ -79,8 +67,7 @@
     // 如果已被拒绝，提示用户手动启用
     if (Notification.permission === 'denied') {
       console.log('❌ 权限已被拒绝');
-      errorMessage = '通知权限被拒绝。请在浏览器设置中手动启用本站点的通知权限。';
-      setTimeout(() => { errorMessage = ''; }, 8000);
+      toast.warning('通知权限被拒绝。请在浏览器设置中手动启用本站点的通知权限。', 8000);
       return 'denied';
     }
     
@@ -275,7 +262,6 @@
   // 加载用户的追踪玩家列表
   async function loadTrackedPlayers() {
     try {
-      clearError(); // 清除之前的错误
       const response = await fetch('/api/tools/player-tracker');
       const data = await response.json();
       
@@ -284,15 +270,14 @@
       } else {
         // API 返回了错误
         if (response.status === 401) {
-          error = '请先登录以使用玩家追踪功能';
+          toast.error('请先登录以使用玩家追踪功能');
         } else {
-          error = data.message || '加载追踪玩家列表失败';
+          toast.error(data.message || '加载追踪玩家列表失败');
         }
       }
     } catch (err) {
       console.error('加载追踪玩家列表失败:', err);
-      errorMessage = '网络错误，请检查网络连接或稍后重试';
-      setTimeout(() => { errorMessage = ''; }, 5000);
+      toast.error('网络错误，请检查网络连接或稍后重试');
     }
   }
 
@@ -388,15 +373,14 @@
       } else {
         // API 返回了错误
         if (response.status === 401) {
-          error = '登录已过期，请重新登录';
+          toast.error('登录已过期，请重新登录');
         } else {
-          error = data.message || '查询玩家状态失败';
+          toast.error(data.message || '查询玩家状态失败');
         }
       }
     } catch (err) {
       console.error('查询玩家失败:', err);
-      errorMessage = '网络错误，请检查网络连接或稍后重试';
-      setTimeout(() => { errorMessage = ''; }, 5000);
+      toast.error('网络错误，请检查网络连接或稍后重试');
     } finally {
       loading = false;
     }
@@ -526,12 +510,6 @@
 </script>
 
 <div class="space-y-6">
-  {#if errorMessage}
-    <div class="mb-4 p-2 rounded bg-red-900/40 text-red-300 border border-red-700/40">{@html errorMessage}</div>
-  {/if}
-  {#if message}
-    <div class="mb-4 p-2 rounded bg-green-900/40 text-green-300 border border-green-700/40">{message}</div>
-  {/if}
   <!-- 追踪玩家管理 -->
   <PlayerManager players={trackedPlayers} onUpdate={handleTrackingUpdate} />
 

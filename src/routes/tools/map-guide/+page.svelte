@@ -110,7 +110,14 @@
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const result = await response.json();
+      let result;
+      const contentType = response.headers.get('content-type') ?? '未知类型';
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        const detail = parseError instanceof Error ? parseError.message : String(parseError);
+        throw new Error(`地图数据格式错误：期望 JSON 响应，实际为 ${contentType}，解析失败原因：${detail}`);
+      }
       
       if (result.error) {
         throw new Error(result.message || result.error);
