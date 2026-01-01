@@ -80,11 +80,13 @@ async function fetchServers(): Promise<ServersData> {
             const res = await fetchWithTimeout(DDNET_API, TIMEOUT_MS);
             if (!res.ok) throw new Error("无法获取 DDNet 服务器数据: HTTP " + res.status);
             return await res.json();
-        } catch (err) {
+        } catch (err: any) {
             lastError = err;
             // 对短暂网络错误进行指数退避
             const backoff = 200 * Math.pow(2, attempt - 1);
-            console.warn(`fetchServers attempt ${attempt} failed:`, err);
+            const errType = err?.name || err?.constructor?.name || typeof err;
+            const errMsg = err?.message || String(err);
+            console.warn(`fetchServers ${attempt} failed: [${errType}] ${errMsg}`);
             if (attempt < MAX_RETRIES) {
                 await new Promise(resolve => setTimeout(resolve, backoff));
             }
