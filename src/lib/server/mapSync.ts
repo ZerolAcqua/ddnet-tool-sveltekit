@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
 import { maps, syncLog } from '$lib/server/schema';
 import { eq, sql } from 'drizzle-orm';
+import { syncLogger } from '$lib/server/logger';
 
 export interface DDNetMap {
   name: string;
@@ -34,10 +35,10 @@ export class MapSyncService {
 
   async shouldSync(): Promise<boolean> {
     if (this.syncInProgress) {
+      syncLogger.warn('已有同步任务正在进行，跳过本次同步检查');
       return false;
     }
 
-    // 检查最后一次同步时间
     const lastSyncRecord = await db
       .select()
       .from(syncLog)
@@ -46,42 +47,47 @@ export class MapSyncService {
       .limit(1);
 
     if (lastSyncRecord.length === 0) {
-      return true; // 没有同步记录，需要同步
+      syncLogger.info('未找到历史同步记录，需要执行同步');
+      return true;
     }
 
     const lastSyncTime = lastSyncRecord[0].syncedAt;
     if (!lastSyncTime) {
-      return true; // 同步时间无效，需要重新同步
+      syncLogger.warn('历史同步记录时间无效，需要重新同步');
+      return true;
     }
-    
+
     const now = new Date();
     const twentyFourHours = 24 * 60 * 60 * 1000;
+    const needSync = now.getTime() - lastSyncTime.getTime() > twentyFourHours;
 
-    return (now.getTime() - lastSyncTime.getTime()) > twentyFourHours;
+    syncLogger.debug(`上次同步时间: ${lastSyncTime.toISOString()}，是否需要同步: ${needSync}`);
+
+    return needSync;
   }
 
   async syncMaps(): Promise<{ success: boolean; message: string; count?: number }> {
     if (this.syncInProgress) {
+      syncLogger.warn('同步任务已在进行中');
       return { success: false, message: '同步正在进行中' };
     }
 
     this.syncInProgress = true;
+    const startTime = Date.now();
 
     try {
-      console.log('开始同步 DDNet 地图数据...');
+      syncLogger.info('开始同步 DDNet 地图数据');
 
-      // 从 DDNet API 获取数据
       const response = await fetch('https://ddnet.org/releases/maps.json');
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const ddnetMaps: DDNetMap[] = await response.json();
-      console.log(`从 DDNet API 获取到 ${ddnetMaps.length} 个地图`);
+      syncLogger.info(`从 DDNet API 获取到 ${ddnetMaps.length} 个地图`);
 
-      // 准备插入数据
-      const insertData = ddnetMaps.map(map => ({
+      const insertData = ddnetMaps.map((map) => ({
         name: map.name,
         website: map.website || null,
         thumbnail: map.thumbnail || null,
@@ -99,15 +105,13 @@ export class MapSyncService {
         timestamp: map.timestamp || null,
       }));
 
-      // 开始数据库事务（同步函数，不能使用 async/await）
       const result = db.transaction((tx) => {
-        // 清空现有地图数据
+        syncLogger.info('清空现有地图数据');
         tx.delete(maps).run();
 
-        // 分批插入数据（避免单次插入过多数据）
         const batchSize = 100;
         let totalInserted = 0;
-        
+
         for (let i = 0; i < insertData.length; i += batchSize) {
           const batch = insertData.slice(i, i + batchSize);
           tx.insert(maps).values(batch).run();
@@ -117,7 +121,6 @@ export class MapSyncService {
         return totalInserted;
       });
 
-      // 记录成功的同步
       await db.insert(syncLog).values({
         source: 'ddnet_api',
         status: 'success',
@@ -125,39 +128,36 @@ export class MapSyncService {
       });
 
       this.lastSync = new Date();
-      console.log(`地图数据同步完成，共同步 ${result} 个地图`);
+      const duration = Date.now() - startTime;
 
-      return { 
-        success: true, 
+      syncLogger.info(`地图数据同步完成，同步数量: ${result}，耗时: ${duration}ms`);
+
+      return {
+        success: true,
         message: `同步成功，共同步 ${result} 个地图`,
-        count: result
+        count: result,
       };
-
     } catch (error) {
-      console.error('同步地图数据失败:', error);
+      syncLogger.error('同步地图数据过程中发生错误', error instanceof Error ? error : undefined);
 
-      // 记录失败的同步
       await db.insert(syncLog).values({
         source: 'ddnet_api',
         status: 'failed',
         errorMessage: error instanceof Error ? error.message : '未知错误',
       });
 
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : '同步失败'
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : '同步失败',
       };
-
     } finally {
       this.syncInProgress = false;
     }
   }
 
   async getMapCount(): Promise<number> {
-    const result = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(maps);
-    
+    const result = await db.select({ count: sql<number>`count(*)` }).from(maps);
+
     return result[0]?.count || 0;
   }
 
@@ -176,7 +176,7 @@ export class MapSyncService {
       return {
         lastSync: null,
         status: 'never',
-        recordCount: 0
+        recordCount: 0,
       };
     }
 
@@ -184,7 +184,7 @@ export class MapSyncService {
     return {
       lastSync: record.syncedAt,
       status: record.status,
-      recordCount: record.recordCount || 0
+      recordCount: record.recordCount || 0,
     };
   }
 }

@@ -54,37 +54,37 @@
     console.log('浏览器支持:', 'Notification' in window);
     
     if (!browser || !("Notification" in window)) {
-      console.log('❌ 浏览器不支持通知 API');
+      console.log('浏览器不支持通知 API');
       return "denied";
     }
     
     // 如果已经授权，直接返回
     if (Notification.permission === 'granted') {
-      console.log('✅ 权限已授予');
+      console.log('权限已授予');
       return 'granted';
     }
     
     // 如果已被拒绝，提示用户手动启用
     if (Notification.permission === 'denied') {
-      console.log('❌ 权限已被拒绝');
+      console.log('权限已被拒绝');
       toast.warning('通知权限被拒绝。请在浏览器设置中手动启用本站点的通知权限。', 8000);
       return 'denied';
     }
     
     try {
-      console.log('📝 正在请求通知权限...');
+      console.log('正在请求通知权限...');
       const permission = await Notification.requestPermission();
       console.log('权限请求结果:', permission);
       
       notificationPermission = permission;
       
       if (permission === 'granted') {
-        console.log('✅ 权限授予成功，发送测试通知');
+        console.log('权限授予成功，发送测试通知');
         
         // 发送测试通知确认功能正常
         try {
           const testNotification = new Notification('DDNet 玩家追踪器', {
-            body: '通知功能已启用！🎉',
+            body: '通知功能已启用！',
             tag: 'test-notification',
             requireInteraction: false,
             silent: false
@@ -100,15 +100,15 @@
           }, 3000);
           
         } catch (testError) {
-          console.error('❌ 测试通知发送失败:', testError);
+          console.error('测试通知发送失败:', testError);
         }
       } else {
-        console.log('❌ 用户拒绝了权限请求');
+        console.log('用户拒绝了权限请求');
       }
       
       return permission;
     } catch (error) {
-      console.error('❌ 权限请求过程出错:', error);
+      console.error('权限请求过程出错:', error);
       notificationPermission = 'denied';
       return 'denied';
     }
@@ -127,26 +127,26 @@
     
     // 基础条件检查
     if (!browser || !('Notification' in window)) {
-      console.log('❌ 浏览器不支持通知或非浏览器环境');
+      console.log('浏览器不支持通知或非浏览器环境');
       return;
     }
     
     if (notificationPermission !== "granted") {
-      console.log('❌ 通知权限未授予:', notificationPermission);
+      console.log('通知权限未授予:', notificationPermission);
       return;
     }
     
     if (!notificationsEnabled) {
-      console.log('❌ 通知功能未启用');
+      console.log('通知功能未启用');
       return;
     }
     
     if (onlinePlayers.length === 0) {
-      console.log('❌ 没有玩家需要通知');
+      console.log('没有玩家需要通知');
       return;
     }
 
-    console.log('✅ 所有条件满足，准备发送通知');
+    console.log('所有条件满足，准备发送通知');
 
     try {
       if (onlinePlayers.length === 1) {
@@ -163,7 +163,7 @@
           // icon: "/favicon.ico"
         });
         
-        console.log('✅ 单个玩家通知创建成功');
+        console.log('单个玩家通知创建成功');
         
         // 添加通知事件监听器进行调试
         notification.onclick = () => console.log('通知被点击');
@@ -184,7 +184,7 @@
           // icon: "/favicon.ico"
         });
         
-        console.log('✅ 多个玩家通知创建成功');
+        console.log('多个玩家通知创建成功');
         
         notification.onclick = () => console.log('通知被点击');
         notification.onerror = (e) => console.error('通知错误:', e);
@@ -192,7 +192,7 @@
         notification.onclose = () => console.log('通知已关闭');
       }
     } catch (error) {
-      console.error('❌ 创建通知失败:', error);
+      console.error('创建通知失败:', error);
       console.error('错误详情:', {
         name: error instanceof Error ? error.name : 'Unknown',
         message: error instanceof Error ? error.message : String(error),
