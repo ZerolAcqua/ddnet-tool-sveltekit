@@ -7,15 +7,15 @@ export const load: PageLoad = async ({ fetch }) => {
     if (response.ok) {
       const data = await response.json();
       return {
-        registrationDisabled: data.settings?.registrationDisabled || false
+        registrationDisabled: data.settings?.registrationDisabled || false,
       };
     }
   } catch (error) {
     // 如果获取失败，默认允许注册
     console.error('预加载注册状态失败:', error);
   }
-  
+
   return {
-    registrationDisabled: false
+    registrationDisabled: false,
   };
 };

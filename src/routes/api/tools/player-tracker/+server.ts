@@ -7,21 +7,22 @@ import { eq, and } from 'drizzle-orm';
 // 获取用户的追踪玩家列表
 export const GET = withAuth(async ({ user }) => {
   try {
-    const players = await db.select().from(trackedPlayers)
+    const players = await db
+      .select()
+      .from(trackedPlayers)
       .where(eq(trackedPlayers.userId, user.id))
       .orderBy(trackedPlayers.createdAt);
 
-    return json({ 
-      success: true, 
-      players: players.map(p => ({
+    return json({
+      success: true,
+      players: players.map((p) => ({
         id: p.id,
         playerName: p.playerName,
         isActive: p.isActive,
         notificationEnabled: p.notificationEnabled,
-        createdAt: p.createdAt
-      }))
+        createdAt: p.createdAt,
+      })),
     });
-
   } catch (error) {
     console.error('获取追踪玩家列表失败:', error);
     return json({ success: false, message: '获取列表失败，请稍后重试' }, { status: 500 });
@@ -38,36 +39,38 @@ export const POST = withAuth(async ({ request, user }) => {
     }
 
     // 检查是否已存在
-    const existing = await db.select().from(trackedPlayers)
+    const existing = await db
+      .select()
+      .from(trackedPlayers)
       .where(
-        and(
-          eq(trackedPlayers.userId, user.id),
-          eq(trackedPlayers.playerName, playerName.trim())
-        )
-      ).limit(1);
+        and(eq(trackedPlayers.userId, user.id), eq(trackedPlayers.playerName, playerName.trim()))
+      )
+      .limit(1);
 
     if (existing.length > 0) {
       return json({ success: false, message: '该玩家已在追踪列表中' }, { status: 409 });
     }
 
     // 添加玩家
-    const newPlayer = await db.insert(trackedPlayers).values({
-      userId: user.id,
-      playerName: playerName.trim(),
-    }).returning();
+    const newPlayer = await db
+      .insert(trackedPlayers)
+      .values({
+        userId: user.id,
+        playerName: playerName.trim(),
+      })
+      .returning();
 
-    return json({ 
-      success: true, 
+    return json({
+      success: true,
       message: '玩家添加成功',
       player: {
         id: newPlayer[0].id,
         playerName: newPlayer[0].playerName,
         isActive: newPlayer[0].isActive,
         notificationEnabled: newPlayer[0].notificationEnabled,
-        createdAt: newPlayer[0].createdAt
-      }
+        createdAt: newPlayer[0].createdAt,
+      },
     });
-
   } catch (error) {
     console.error('添加追踪玩家失败:', error);
     return json({ success: false, message: '添加失败，请稍后重试' }, { status: 500 });
@@ -78,15 +81,15 @@ export const POST = withAuth(async ({ request, user }) => {
 export const DELETE = withAuth(async ({ user }) => {
   try {
     // 删除用户的所有追踪玩家
-    const result = await db.delete(trackedPlayers)
+    const result = await db
+      .delete(trackedPlayers)
       .where(eq(trackedPlayers.userId, user.id))
       .returning();
 
-    return json({ 
-      success: true, 
-      message: `已清空追踪列表，共移除 ${result.length} 个玩家`
+    return json({
+      success: true,
+      message: `已清空追踪列表，共移除 ${result.length} 个玩家`,
     });
-
   } catch (error) {
     console.error('清空追踪玩家列表失败:', error);
     return json({ success: false, message: '清空失败，请稍后重试' }, { status: 500 });

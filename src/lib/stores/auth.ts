@@ -18,28 +18,28 @@ export interface AuthState {
 export const authState = writable<AuthState>({
   user: null,
   isAuthenticated: false,
-  isLoading: browser // 只有在浏览器中才显示加载状态
+  isLoading: browser, // 只有在浏览器中才显示加载状态
 });
 
 // 初始化认证状态
 export async function initAuth() {
   if (!browser) return;
-  
+
   try {
     const response = await fetch('/api/auth/me');
     const data = await response.json();
-    
+
     authState.set({
       user: data.user,
       isAuthenticated: data.isAuthenticated,
-      isLoading: false
+      isLoading: false,
     });
   } catch (error) {
     console.error('获取用户状态失败:', error);
     authState.set({
       user: null,
       isAuthenticated: false,
-      isLoading: false
+      isLoading: false,
     });
   }
 }
@@ -51,7 +51,7 @@ export async function logout() {
     authState.set({
       user: null,
       isAuthenticated: false,
-      isLoading: false
+      isLoading: false,
     });
   } catch (error) {
     console.error('登出失败:', error);
@@ -60,9 +60,9 @@ export async function logout() {
 
 // 更新用户信息
 export function updateUser(user: User) {
-  authState.update(state => ({
+  authState.update((state) => ({
     ...state,
     user,
-    isAuthenticated: true
+    isAuthenticated: true,
   }));
 }

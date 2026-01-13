@@ -8,7 +8,7 @@ const settingsCache = new Map<string, string>();
 
 // 设置键常量
 export const SETTING_KEYS = {
-  REGISTRATION_DISABLED: 'registration_disabled'
+  REGISTRATION_DISABLED: 'registration_disabled',
 } as const;
 
 // 获取设置值
@@ -19,12 +19,14 @@ export async function getSetting(key: string, defaultValue: string = ''): Promis
   }
 
   try {
-    const setting = await db.select().from(systemSettings)
+    const setting = await db
+      .select()
+      .from(systemSettings)
       .where(eq(systemSettings.key, key))
       .limit(1);
 
     const value = setting.length > 0 ? setting[0].value : defaultValue;
-    
+
     // 更新缓存
     settingsCache.set(key, value);
     return value;
@@ -38,17 +40,20 @@ export async function getSetting(key: string, defaultValue: string = ''): Promis
 export async function setSetting(key: string, value: string, userId?: string): Promise<void> {
   try {
     // 检查设置是否已存在
-    const existing = await db.select().from(systemSettings)
+    const existing = await db
+      .select()
+      .from(systemSettings)
       .where(eq(systemSettings.key, key))
       .limit(1);
 
     if (existing.length > 0) {
       // 更新现有设置
-      await db.update(systemSettings)
+      await db
+        .update(systemSettings)
         .set({
           value,
           updatedAt: new Date(),
-          updatedBy: userId
+          updatedBy: userId,
         })
         .where(eq(systemSettings.key, key));
     } else {
@@ -56,7 +61,7 @@ export async function setSetting(key: string, value: string, userId?: string): P
       await db.insert(systemSettings).values({
         key,
         value,
-        updatedBy: userId
+        updatedBy: userId,
       });
     }
 
@@ -71,11 +76,11 @@ export async function setSetting(key: string, value: string, userId?: string): P
 // 批量获取设置
 export async function getSettings(keys: string[]): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
-  
+
   for (const key of keys) {
     result[key] = await getSetting(key);
   }
-  
+
   return result;
 }
 

@@ -13,7 +13,11 @@ export const DELETE = withAdminAuth(async ({ request, user: currentUser, params 
     }
 
     // 检查要删除的用户是否存在
-    const targetUserResult = await db.select().from(users).where(eq(users.id, targetUserId)).limit(1);
+    const targetUserResult = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, targetUserId))
+      .limit(1);
     if (targetUserResult.length === 0) {
       return json({ success: false, message: '用户不存在' }, { status: 404 });
     }
@@ -33,11 +37,10 @@ export const DELETE = withAdminAuth(async ({ request, user: currentUser, params 
     // 删除用户账户（cascade会自动删除相关数据）
     await db.delete(users).where(eq(users.id, targetUserId));
 
-    return json({ 
-      success: true, 
-      message: `用户 "${targetUser.username}" 已成功删除` 
+    return json({
+      success: true,
+      message: `用户 "${targetUser.username}" 已成功删除`,
     });
-
   } catch (error) {
     console.error('删除用户失败:', error);
     return json({ success: false, message: '删除用户失败，请稍后重试' }, { status: 500 });

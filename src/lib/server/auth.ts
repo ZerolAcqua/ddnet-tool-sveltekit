@@ -16,23 +16,30 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-export async function createUser(username: string, password: string, isAdmin = false): Promise<User> {
+export async function createUser(
+  username: string,
+  password: string,
+  isAdmin = false
+): Promise<User> {
   const passwordHash = await hashPassword(password);
-  
-  const [user] = await db.insert(users).values({
-    username,
-    passwordHash,
-    isAdmin,
-  }).returning();
-  
+
+  const [user] = await db
+    .insert(users)
+    .values({
+      username,
+      passwordHash,
+      isAdmin,
+    })
+    .returning();
+
   return user;
 }
 
 export async function authenticateUser(username: string, password: string): Promise<User | null> {
   const [user] = await db.select().from(users).where(eq(users.username, username));
-  
+
   if (!user) return null;
-  
+
   const isValid = await verifyPassword(password, user.passwordHash);
   return isValid ? user : null;
 }
@@ -46,28 +53,26 @@ export function generateSessionToken(): string {
 
 export async function createSession(sessionToken: string, userId: string): Promise<string> {
   const expiresAt = new Date(Date.now() + SESSION_DURATION);
-  
+
   await db.insert(sessions).values({
     id: sessionToken,
     userId,
     expiresAt,
   });
-  
+
   return sessionToken;
 }
 
 export async function verifySession(sessionId: string): Promise<User | null> {
   try {
-    const [session] = await db.select().from(sessions)
-      .where(eq(sessions.id, sessionId));
-    
+    const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId));
+
     if (!session || session.expiresAt < new Date()) {
       return null;
     }
-    
-    const [user] = await db.select().from(users)
-      .where(eq(users.id, session.userId));
-    
+
+    const [user] = await db.select().from(users).where(eq(users.id, session.userId));
+
     return user || null;
   } catch {
     return null;

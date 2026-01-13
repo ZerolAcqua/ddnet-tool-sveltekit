@@ -15,13 +15,11 @@ export const PATCH = withAuth(async ({ request, user, params }) => {
     const { isActive, notificationEnabled, playerName } = await request.json();
 
     // 验证玩家是否属于当前用户
-    const player = await db.select().from(trackedPlayers)
-      .where(
-        and(
-          eq(trackedPlayers.id, playerId),
-          eq(trackedPlayers.userId, user.id)
-        )
-      ).limit(1);
+    const player = await db
+      .select()
+      .from(trackedPlayers)
+      .where(and(eq(trackedPlayers.id, playerId), eq(trackedPlayers.userId, user.id)))
+      .limit(1);
 
     if (player.length === 0) {
       return json({ success: false, message: '玩家不存在或无权限' }, { status: 404 });
@@ -32,13 +30,13 @@ export const PATCH = withAuth(async ({ request, user, params }) => {
       const trimmedName = playerName.trim();
       if (trimmedName !== player[0].playerName) {
         // 检查是否已存在同名玩家
-        const existingPlayer = await db.select().from(trackedPlayers)
+        const existingPlayer = await db
+          .select()
+          .from(trackedPlayers)
           .where(
-            and(
-              eq(trackedPlayers.playerName, trimmedName),
-              eq(trackedPlayers.userId, user.id)
-            )
-          ).limit(1);
+            and(eq(trackedPlayers.playerName, trimmedName), eq(trackedPlayers.userId, user.id))
+          )
+          .limit(1);
 
         if (existingPlayer.length > 0) {
           return json({ success: false, message: '该玩家名已存在' }, { status: 400 });
@@ -61,23 +59,23 @@ export const PATCH = withAuth(async ({ request, user, params }) => {
       return json({ success: false, message: '没有有效的更新数据' }, { status: 400 });
     }
 
-    const updatedPlayer = await db.update(trackedPlayers)
+    const updatedPlayer = await db
+      .update(trackedPlayers)
       .set(updates)
       .where(eq(trackedPlayers.id, playerId))
       .returning();
 
-    return json({ 
-      success: true, 
+    return json({
+      success: true,
       message: '设置更新成功',
       player: {
         id: updatedPlayer[0].id,
         playerName: updatedPlayer[0].playerName,
         isActive: updatedPlayer[0].isActive,
         notificationEnabled: updatedPlayer[0].notificationEnabled,
-        createdAt: updatedPlayer[0].createdAt
-      }
+        createdAt: updatedPlayer[0].createdAt,
+      },
     });
-
   } catch (error) {
     console.error('更新追踪玩家失败:', error);
     return json({ success: false, message: '更新失败，请稍后重试' }, { status: 500 });
@@ -93,23 +91,19 @@ export const DELETE = withAuth(async ({ user, params }) => {
     }
 
     // 验证并删除
-    const result = await db.delete(trackedPlayers)
-      .where(
-        and(
-          eq(trackedPlayers.id, playerId),
-          eq(trackedPlayers.userId, user.id)
-        )
-      ).returning();
+    const result = await db
+      .delete(trackedPlayers)
+      .where(and(eq(trackedPlayers.id, playerId), eq(trackedPlayers.userId, user.id)))
+      .returning();
 
     if (result.length === 0) {
       return json({ success: false, message: '玩家不存在或无权限' }, { status: 404 });
     }
 
-    return json({ 
-      success: true, 
-      message: '玩家移除成功'
+    return json({
+      success: true,
+      message: '玩家移除成功',
     });
-
   } catch (error) {
     console.error('删除追踪玩家失败:', error);
     return json({ success: false, message: '删除失败，请稍后重试' }, { status: 500 });

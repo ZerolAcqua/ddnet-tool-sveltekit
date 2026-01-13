@@ -10,7 +10,7 @@ export interface AuthenticatedRequest extends RequestEvent {
 // 基础会话验证
 export async function requireAuth(event: RequestEvent): Promise<User | Response> {
   const sessionToken = event.cookies.get('session');
-  
+
   if (!sessionToken) {
     return json({ success: false, message: '请先登录' }, { status: 401 });
   }
@@ -28,7 +28,7 @@ export async function requireAuth(event: RequestEvent): Promise<User | Response>
 // 管理员权限验证
 export async function requireAdmin(event: RequestEvent): Promise<User | Response> {
   const userOrResponse = await requireAuth(event);
-  
+
   if (userOrResponse instanceof Response) {
     return userOrResponse; // 返回认证错误
   }
@@ -43,7 +43,7 @@ export async function requireAdmin(event: RequestEvent): Promise<User | Response
 // 可选的认证检查（用于设置接口等）
 export async function optionalAuth(event: RequestEvent): Promise<User | null> {
   const sessionToken = event.cookies.get('session');
-  
+
   if (!sessionToken) {
     return null;
   }
@@ -55,7 +55,7 @@ export async function optionalAuth(event: RequestEvent): Promise<User | null> {
 export function withAuth<T>(handler: (event: AuthenticatedRequest) => Promise<T>) {
   return async (event: RequestEvent): Promise<T> => {
     const userOrResponse = await requireAuth(event);
-    
+
     if (userOrResponse instanceof Response) {
       return userOrResponse as T;
     }
@@ -70,7 +70,7 @@ export function withAuth<T>(handler: (event: AuthenticatedRequest) => Promise<T>
 export function withAdminAuth<T>(handler: (event: AuthenticatedRequest) => Promise<T>) {
   return async (event: RequestEvent): Promise<T> => {
     const userOrResponse = await requireAdmin(event);
-    
+
     if (userOrResponse instanceof Response) {
       return userOrResponse as T;
     }

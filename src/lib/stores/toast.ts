@@ -15,15 +15,15 @@ function createToastStore() {
 
   const add = (message: string, type: ToastType = 'info', duration = 5000) => {
     const id = `toast-${++idCounter}`;
-    update(toasts => [...toasts, { id, message, type, duration }]);
-    
+    update((toasts) => [...toasts, { id, message, type, duration }]);
+
     // 自动移除（如果设定了 duration）
     if (duration > 0) {
       setTimeout(() => {
-        update(toasts => toasts.filter(t => t.id !== id));
+        update((toasts) => toasts.filter((t) => t.id !== id));
       }, duration);
     }
-    
+
     return id;
   };
 
@@ -31,7 +31,7 @@ function createToastStore() {
     subscribe,
     add,
     remove: (id: string) => {
-      update(toasts => toasts.filter(t => t.id !== id));
+      update((toasts) => toasts.filter((t) => t.id !== id));
     },
     clear: () => {
       update(() => []);
@@ -47,7 +47,7 @@ function createToastStore() {
     },
     info: (message: string, duration = 5000) => {
       return add(message, 'info', duration);
-    }
+    },
   };
 }
 

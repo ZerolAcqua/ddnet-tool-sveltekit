@@ -6,18 +6,18 @@ export async function requireAuth(fetch: typeof globalThis.fetch, url: URL): Pro
   try {
     const response = await fetch('/api/auth/me');
     const data = await response.json();
-    
+
     if (!data.isAuthenticated) {
       const redirectTo = url.pathname + url.search;
       throw redirect(302, `/login?redirectTo=${encodeURIComponent(redirectTo)}`);
     }
-    
+
     return data.user;
   } catch (error) {
     if (error instanceof Response && error.status === 302) {
       throw error; // 重新抛出重定向
     }
-    
+
     // 其他错误，重定向到登录页
     const redirectTo = url.pathname + url.search;
     throw redirect(302, `/login?redirectTo=${encodeURIComponent(redirectTo)}`);
@@ -27,11 +27,11 @@ export async function requireAuth(fetch: typeof globalThis.fetch, url: URL): Pro
 // 管理员权限检查
 export async function requireAdmin(fetch: typeof globalThis.fetch): Promise<User> {
   const user = await requireAuth(fetch, new URL('/admin', 'http://localhost'));
-  
+
   if (!user.isAdmin) {
     throw redirect(302, '/');
   }
-  
+
   return user;
 }
 

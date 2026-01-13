@@ -13,8 +13,12 @@ export const POST = async ({ request, cookies }: RequestEvent) => {
     }
 
     // 查找用户
-    const userResult = await db.select().from(users).where(eq(users.username, username.trim())).limit(1);
-    
+    const userResult = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username.trim()))
+      .limit(1);
+
     if (userResult.length === 0) {
       return json({ success: false, message: '用户名或密码错误' }, { status: 401 });
     }
@@ -37,20 +41,19 @@ export const POST = async ({ request, cookies }: RequestEvent) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30 // 30 天
+      maxAge: 60 * 60 * 24 * 30, // 30 天
     });
 
-    return json({ 
-      success: true, 
-      message: '登录成功', 
+    return json({
+      success: true,
+      message: '登录成功',
       user: {
         id: user.id,
         username: user.username,
         isAdmin: user.isAdmin,
-        createdAt: user.createdAt
-      }
+        createdAt: user.createdAt,
+      },
     });
-
   } catch (error) {
     console.error('登录失败:', error);
     return json({ success: false, message: '登录失败，请稍后重试' }, { status: 500 });

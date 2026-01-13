@@ -17,7 +17,8 @@
 		"db:studio": "drizzle-kit studio",
 		"sync:once": "tsx scripts/sync-maps.ts",
 		"sync:start": "tsx scripts/sync-scheduler.ts",
-		"sync:test": "RUN_IMMEDIATELY=true SYNC_SCHEDULE=\"*/2 * * * *\" tsx scripts/sync-scheduler.ts"
+		"sync:test": "RUN_IMMEDIATELY=true SYNC_SCHEDULE=\"*/2 * * * *\" tsx scripts/sync-scheduler.ts",
+		"format:ts": "prettier --write \"src/**/*.ts\" \"*.ts\" --ignore-path .prettierignore"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^6.1.0",
