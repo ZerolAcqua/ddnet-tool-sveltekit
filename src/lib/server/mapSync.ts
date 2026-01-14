@@ -1,7 +1,10 @@
-import { db } from '$lib/server/db';
-import { maps, syncLog } from '$lib/server/schema';
+import { db } from './db.js';
+import { maps, syncLog } from './schema.js';
 import { eq, sql } from 'drizzle-orm';
-import { syncLogger } from '$lib/server/logger';
+import { createLoggerFactory } from './logger-core.js';
+
+const { createLogger } = createLoggerFactory('info');
+const syncLogger = createLogger('sync');
 
 export interface DDNetMap {
   name: string;

@@ -6,7 +6,7 @@
  */
 
 import { MapSyncService } from '../src/lib/server/mapSync.js';
-import { syncLogger } from '../src/lib/server/logger.js';
+import { syncLogger } from './logger.js';
 
 // 主同步函数
 async function runSync() {

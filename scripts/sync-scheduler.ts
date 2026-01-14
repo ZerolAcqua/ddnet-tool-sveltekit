@@ -7,7 +7,7 @@
 
 import cron from 'node-cron';
 import { runSync } from './sync-maps.js';
-import { syncLogger } from '../src/lib/server/logger.js';
+import { syncLogger } from './logger.js';
 
 // 定时任务配置
 const schedules = {
